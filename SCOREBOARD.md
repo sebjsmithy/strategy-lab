@@ -1,5 +1,14 @@
 # Scoreboard
 
+> ### ▶ NEXT ACTION
+> **Run `strategies/v0_buy_hold.py` in QuantConnect** and bring back four numbers:
+> Compounding Annual Return · Drawdown · Sharpe Ratio · Total Orders.
+>
+> *(Claude: keep this block updated at the end of every session. It is the first
+> thing to read when Seb comes back after a gap.)*
+
+---
+
 **This file is the actual output of the project.** Not the code — the code is just how we got here.
 
 Read this first to see where things stand. Rules for filling it in are in [README.md](README.md) §5 and §6.
