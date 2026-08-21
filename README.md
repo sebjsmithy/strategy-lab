@@ -306,11 +306,11 @@ Pyramiding is genuinely interesting and worth testing later, but it adds a param
 **How LEAN handles this:** positions are expressed as **targets**, not actions.
 
 ```python
-self.SetHoldings(self.qqq, 1.0)   # "I want to be 100% long QQQ"
-self.Liquidate(self.qqq)          # "I want to be flat"
+self.set_holdings(self.qqq, 1.0)   # "I want to be 100% long QQQ"
+self.liquidate(self.qqq)           # "I want to be flat"
 ```
 
-`SetHoldings` sets a target, so calling it repeatedly just re-asserts "still want 100%" and nothing more is bought. Pyramiding only happens if written deliberately.
+`set_holdings` sets a target, so calling it repeatedly just re-asserts "still want 100%" and nothing more is bought. Pyramiding only happens if written deliberately.
 
 ### Costs stay on, always
 
@@ -333,7 +333,11 @@ Every version sets a brokerage model so fees and slippage are included. A backte
 
 ### Conventions
 
-- **LEAN API style:** these files use PascalCase (`self.SetStartDate`, `self.OnData`). QuantConnect's current docs show snake_case (`self.set_start_date`) — both work, PascalCase is used here for consistency and because it is what most tutorials and forum answers show. Don't mix the two in one file.
+- **LEAN API style: snake_case, always.** `self.set_start_date`, `self.add_equity`, `self.portfolio.invested`, `data.contains_key`. Method overrides are `def initialize(self)` and `def on_data(self, data)`.
+
+  Enum members are **UPPER_SNAKE**: `Resolution.DAILY`, `AccountType.MARGIN`, `BrokerageName.INTERACTIVE_BROKERS_BROKERAGE`.
+
+  **PascalCase (`SetStartDate`, `Resolution.Daily`) does not work.** Older tutorials, forum posts and blog articles are full of it because LEAN used to use it — it has since been removed, not deprecated. If you find a PascalCase example online, translate it before using it. Verified against LEAN master v18024 (August 2026) via the Algorithm Lab linter.
 - **Every strategy file starts with a docstring** stating: which version it is, what changed from the previous one, the pre-registered "this helps if…", and which window it runs on.
 - **Commit messages** carry the result numbers. Format: `vN: <what it is>. CAGR x%, MaxDD -y%, Sharpe z, N trades`.
 

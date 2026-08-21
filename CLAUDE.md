@@ -18,7 +18,9 @@ A two-person strategy research project (Seb, Akram). We build a breakout strateg
 
 ## Conventions
 
-- **LEAN API style:** PascalCase (`self.SetStartDate`, `self.OnData`). QuantConnect's current docs show snake_case; both work. Stay consistent with the existing files, don't mix styles within a file.
+- **LEAN API style: snake_case, always.** `self.set_start_date`, `self.add_equity`, `self.portfolio.invested`, `data.contains_key`, `.symbol`. Overrides are `def initialize(self)` / `def on_data(self, data)`. Enum members are UPPER_SNAKE: `Resolution.DAILY`, `AccountType.MARGIN`, `BrokerageName.INTERACTIVE_BROKERS_BROKERAGE`.
+
+  **PascalCase does not work** — LEAN removed it. Most tutorials and forum answers online still show it, so translate any example you find before using it. Do not reintroduce it, and do not trust a memory that says both styles work.
 - **Every strategy file** opens with a docstring giving: version, what changed from the previous one, the pre-registered *"this helps if…"*, and which window it runs on.
 - **Commit messages** carry the numbers:
   `vN: <what it is>. CAGR x%, MaxDD -y%, Sharpe z, N trades`

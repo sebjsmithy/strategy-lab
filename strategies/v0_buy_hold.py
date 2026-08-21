@@ -28,34 +28,34 @@ class V0BuyHold(QCAlgorithm):
       5. Put them in SCOREBOARD.md with the commit hash (git log -1 --pretty=%h)
     """
 
-    def Initialize(self):
+    def initialize(self):
         # --- Build window. Do not change these dates to the holdout period
         # --- (2019 onward) without reading README.md section 4 first.
-        self.SetStartDate(2010, 1, 1)
-        self.SetEndDate(2018, 12, 31)
-        self.SetCash(100000)
+        self.set_start_date(2010, 1, 1)
+        self.set_end_date(2018, 12, 31)
+        self.set_cash(100000)
 
         # Realistic fees and fill assumptions. Keep this in EVERY version.
         # A backtest without costs is a fantasy.
-        self.SetBrokerageModel(
-            BrokerageName.InteractiveBrokersBrokerage,
-            AccountType.Margin,
+        self.set_brokerage_model(
+            BrokerageName.INTERACTIVE_BROKERS_BROKERAGE,
+            AccountType.MARGIN,
         )
 
-        self.qqq = self.AddEquity("QQQ", Resolution.Daily).Symbol
+        self.qqq = self.add_equity("QQQ", Resolution.DAILY).symbol
 
-    def OnData(self, data: Slice):
+    def on_data(self, data: Slice):
         # Already fully invested - nothing to do for the rest of the backtest.
-        if self.Portfolio.Invested:
+        if self.portfolio.invested:
             return
 
         # Guard against a missing bar on the very first day.
-        if not data.ContainsKey(self.qqq) or data[self.qqq] is None:
+        if not data.contains_key(self.qqq) or data[self.qqq] is None:
             return
 
-        # SetHoldings takes a TARGET WEIGHT, not an order.
+        # set_holdings takes a TARGET WEIGHT, not an order.
         # 1.0 means "I want 100% of the portfolio in QQQ".
         # Because it is a target, calling it repeatedly does not buy more -
         # which is why repeat signals cannot accidentally leverage us up.
         # See README.md section 7, "Repeat signals and pyramiding".
-        self.SetHoldings(self.qqq, 1.0)
+        self.set_holdings(self.qqq, 1.0)
