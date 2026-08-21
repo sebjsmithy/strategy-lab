@@ -30,8 +30,21 @@ When Seb returns with backtest numbers:
 1. Add the row to `SCOREBOARD.md`, **including the commit hash** of the code that produced it (`git log -1 --pretty=%h`).
 2. Apply the four keep/cut criteria from README §5 honestly.
 3. Write the next version as a **new file**, with its pre-registered hypothesis in the docstring.
-4. Remind Seb to commit and push.
+4. Commit and push (Seb generally wants you to run the git commands, not hand him instructions).
+5. **Update the `▶ NEXT ACTION` block** at the top of `SCOREBOARD.md` before the session ends.
 
-## Where things stand
+## Starting a session
 
-Check `SCOREBOARD.md`. If every row is empty, the project is at v0 and has not been run yet.
+Seb's setup is the Claude desktop app pointed at this folder. He will usually
+open with something like *"where are we and what's next?"*. Answer it by:
+
+1. Reading the **`▶ NEXT ACTION`** block at the top of `SCOREBOARD.md` — that is the
+   single source of truth for what to do next.
+2. Skimming the results table for what has already been measured.
+3. `git log --oneline -5` if you need recent context.
+
+If every row is empty, the project is at v0 and has not been run yet.
+
+**Always leave the `▶ NEXT ACTION` block accurate when you finish.** It is the
+handoff between sessions — this chat will eventually run out of context, and that
+block plus the scoreboard is what survives.

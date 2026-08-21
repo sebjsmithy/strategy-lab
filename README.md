@@ -235,6 +235,28 @@ write code here (git)  ->  paste into QuantConnect Algorithm Lab  ->  run
 
 The `$8/month Researcher tier` unlocks the API and the LEAN CLI, which syncs local code to the cloud properly and kills the copy-paste. Worth it once the manual step becomes the annoying part — not before.
 
+### The working setup
+
+Deliberately minimal — one tool, not three.
+
+| Tool | Used for |
+|---|---|
+| **Claude desktop app**, opened on this folder | Everything: editing files, writing strategies, running the git commands |
+| **QuantConnect Algorithm Lab** (browser) | Running backtests |
+| **Terminal** | Rarely needed — Claude runs git |
+
+An editor like Cursor or VS Code is optional. This repo is a handful of files; it isn't worth the setup cost yet.
+
+### Picking the work back up after a break
+
+Open the Claude app on this folder and ask:
+
+> Where are we and what's next?
+
+`CLAUDE.md` loads automatically, so no re-briefing is needed. The answer comes from the **`▶ NEXT ACTION`** block at the top of `SCOREBOARD.md`, which gets updated at the end of every session.
+
+That block is the handoff mechanism. Chats run out of context eventually; the repo does not.
+
 ---
 
 ## 7. Design decisions already made
@@ -322,11 +344,20 @@ When Seb comes back with numbers from a backtest:
 1. Add the row to `SCOREBOARD.md` — including the commit hash of the code that produced it.
 2. Apply the [What earns a row](#5-what-earns-a-row) criteria honestly. If the component failed, say so plainly and record it as cut. Do not soften a bad result.
 3. Write the next version as a **new file**, with its pre-registered hypothesis in the docstring.
-4. Remind Seb to commit and push.
+4. Commit and push — Seb generally wants the git commands run for him, not handed to him.
+5. **Update the `▶ NEXT ACTION` block** at the top of `SCOREBOARD.md` before the session ends.
 
 ### Context for a cold start
 
-If you are picking this up with no prior conversation: read this README top to bottom, then `SCOREBOARD.md` to see where the project actually is. The scoreboard is the source of truth for progress — not the file list, not the git log.
+If you are picking this up with no prior conversation:
+
+1. Read the **`▶ NEXT ACTION`** block at the top of `SCOREBOARD.md`. That is the single source of truth for what to do next.
+2. Read the scoreboard's results table for what has already been measured.
+3. Read this README for the reasoning behind the rules.
+
+The scoreboard is the source of truth for progress — not the file list, not the git log.
+
+**Always leave the `▶ NEXT ACTION` block accurate when a session ends.** Chats run out of context; that block and the scoreboard are what survive.
 
 ---
 
