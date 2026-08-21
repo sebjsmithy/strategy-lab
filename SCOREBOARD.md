@@ -1,8 +1,11 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **Run `strategies/v0_buy_hold.py` in QuantConnect** and bring back four numbers:
+> **Run `strategies/v1_donchian.py` in QuantConnect** and bring back four numbers:
 > Compounding Annual Return · Drawdown · Sharpe Ratio · Total Orders.
+>
+> The bar to beat is v0: **Sharpe 0.73, max drawdown 22.80%.**
+> v1 is KEPT only if Sharpe ≥ 0.88 *and* drawdown is no worse.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -25,8 +28,8 @@ Read this first to see where things stand. Rules for filling it in are in [READM
 
 | v | Commit | Pre-reg: "this helps if…" | CAGR | Max DD | Sharpe | Trades | vs prev | Verdict |
 |---|---|---|---|---|---|---|---|---|
-| v0 | | *(baseline — nothing to beat yet)* | | | | | — | — |
-| v1 | | | | | | | | |
+| v0 | `2277fc1` | *(baseline — nothing to beat yet)* | 15.44% | -22.80% | 0.73 | 1 | — | **baseline** |
+| v1 | | Sharpe ≥ 0.88 **and** drawdown no worse than 22.80% | | | | | | pending |
 | v1s | | | | | | | | |
 | v2 | | | | | | | | |
 | v3a | | | | | | | | |
@@ -55,9 +58,23 @@ A version is `KEPT` only if **all four** criteria in README §5 hold: Sharpe +0.
 Short notes on what happened and why — especially for anything cut. A cut component with a recorded reason is a real finding.
 
 ### v0 — buy & hold baseline
-- **Status:** pending — not yet run
-- **File:** `strategies/v0_buy_hold.py`
+- **Status:** DONE — this is the number to beat
+- **File:** `strategies/v0_buy_hold.py` @ `2277fc1`
+- **Result:** CAGR 15.44% · Max DD 22.80% · Sharpe 0.73 · 1 order
+- **Detail:** bought 2,475 QQQ @ $40.27 on 2010-01-05, held to 2018-12-31.
+  Start equity $100,000 → end equity $364,271.34. Total fees $12.38.
 - **Notes:**
+  - 2010–2018 was a strong bull run for the NASDAQ. A 15.4% CAGR here is the
+    *market*, not skill. Any later version has to beat this to justify existing.
+  - Sharpe 0.73 with a 22.8% drawdown is the honest cost of just owning the index.
+  - `Alpha`, `Beta` and `Treynor Ratio` all report 0 — the benchmark comparison
+    didn't populate. Cosmetic QC quirk; doesn't affect the four numbers we track.
+  - `Win Rate` / `Loss Rate` / `Average Win` all show 0% because there are no
+    *closed* trades. Expected for buy-and-hold, not a bug.
+  - The runtime panel's "Net Profit" shows **-$12.38** (exactly the fees) because
+    that field counts *realised* P&L only. Nothing was ever sold, so the entire
+    $264,271.34 gain sits in "Unrealized". The Statistics panel's "Net Profit"
+    of 264.271% is the real figure. Two different meanings, same label.
 
 ---
 
