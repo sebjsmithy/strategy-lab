@@ -1,16 +1,20 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **Open decision — not yet resolved.** v1 was CUT (Sharpe 0.434 vs the 0.88 bar).
-> But it *did* cut drawdown 22.8% → 17.2% and has positive expectancy
-> (54% win rate, 1.88 profit-loss ratio), so the entry rule is not noise —
-> it is simply out of the market too much during a historic bull run.
+> **v1 is closed. The sweep settled it: no lookback from 5 to 50 beats buy-and-hold**
+> (best Sharpe 0.419 vs v0's 0.730). The *idea* failed, not the parameter — so
+> there is nothing to rescue by tuning. Full analysis in Parameter sweeps below.
 >
-> The choice to make:
-> **(a)** sweep v1's lookback to see whether the failure is the *parameter* or the
-> *idea* — cheap, and the plateau shape is informative either way; or
-> **(b)** accept trend-following underperforms a raging bull market on a single
-> long-only index, and change something structural instead.
+> The open question is what changes **structurally** next. Candidates, not yet decided:
+> - **v2 (GARCH sizing)** as planned — but note it sizes an entry rule we just
+>   showed has no edge on QQQ. Sizing cannot rescue a signal that is not there.
+> - **Change the instrument.** Trend-following classically earns its keep across
+>   many uncorrelated assets, or in choppy/falling markets — not on one long-only
+>   equity index during the strongest bull run in living memory.
+> - **v3a (Bollinger)** to test whether *any* breakout rule works here, which would
+>   separate "breakouts don't work on QQQ" from "Donchian specifically doesn't".
+>
+> Discuss with Seb before picking. Do not skip ahead to v4/v5.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -112,8 +116,67 @@ Short notes on what happened and why — especially for anything cut. A cut comp
 
 When testing a range of values, record the **shape**, not just the winner. A plateau means the idea is real; a lone spike means it's noise.
 
-### (none yet)
+### v1-sweep — Donchian lookback, 5 to 50 days
 
-| Version | Parameter | Values tested | Shape | Chosen | Why |
-|---|---|---|---|---|---|
-| | | | | | |
+- **Raw data:** `Backtest recordings/V1Sweep.xlsx`
+- **Held constant:** QQQ, long only, binary sizing, entry and exit both use the
+  same lookback, 2010–2018, IB fees.
+
+| Lookback | Sharpe | CAGR | Max DD | DD Recovery | Win rate | P/L ratio | Orders |
+|---|---|---|---|---|---|---|---|
+| 5 | 0.253 | 4.25% | 18.2% | 1285 | 45% | 1.61 | 343 |
+| 10 | 0.087 | 2.07% | 17.3% | 645 | 39% | 1.95 | 191 |
+| 15 | 0.158 | 3.00% | 24.4% | 1143 | 45% | 1.73 | 132 |
+| **20** | **0.434** | **6.61%** | **17.2%** | **614** | **54%** | **1.88** | **87** |
+| 30 | 0.279 | 4.83% | 23.5% | 914 | 58% | 1.41 | 67 |
+| 40 | 0.400 | 7.01% | 26.5% | 816 | 65% | 1.54 | 42 |
+| 45 | 0.419 | 7.39% | 27.2% | 875 | 65% | 1.61 | 39 |
+| 50 | *n/a* | ~6.89%¹ | *n/a* | *n/a* | *n/a* | *n/a* | *n/a* |
+| **v0** | **0.730** | **15.44%** | **22.80%** | **238** | — | — | **1** |
+
+¹ 50-day stats panel would not load (free-tier UI issue). CAGR derived from the
+reported end equity of $182,162.59 on $100,000 over 9 years. Treat as approximate.
+
+**Shape — read it as a spike plus a plateau, not a single winner:**
+
+```
+ 5d  0.253  ##########
+10d  0.087  ###
+15d  0.158  ######
+20d  0.434  #################   <- lone spike, neighbours much worse
+30d  0.279  ###########
+40d  0.400  ################ }
+45d  0.419  ################# }  <- genuine plateau, adjacent values agree
+```
+
+**Findings:**
+
+1. **No lookback beats v0.** Best Sharpe in the family is 0.419 vs buy-and-hold's
+   0.730; best CAGR is 7.39% vs 15.44%. The *idea* failed, not the parameter.
+   This is a clean rejection, not an inconclusive result.
+2. **v1's 0.434 at 20 days was partly luck.** It is a lone spike between 15 (0.158)
+   and 30 (0.279). Had we defaulted to 15 or 30, v1 would have looked far worse.
+   A cautionary note about trusting any single un-swept result.
+3. **40/45 is the only trustworthy region** — adjacent values agree, and the
+   estimated 50-day rolls back over, so it is a real hill rather than noise.
+4. **There is no cell that wins on either axis.** Short lookbacks beat v0 on
+   drawdown (17–18% vs 22.8%) but return almost nothing. Long lookbacks recover
+   some return but their drawdown (26–27%) is *worse* than v0. The strategy's only
+   advantage over buy-and-hold disappears exactly where its returns become
+   tolerable.
+5. **Win rate is the one clean monotonic relationship:** 39% → 45% → 54% → 58% →
+   65% as lookback lengthens. Longer lookbacks genuinely produce fewer, better
+   signals. Real effect, insufficient to rescue the strategy.
+6. **Every variant recovers from drawdown far slower than v0** — 614 to 1,285 days
+   versus 238. No exceptions. Whipsaw is systemic across the whole family.
+7. **The 10-day hypothesis was rejected.** Predicted to reduce opportunity cost by
+   staying invested more; came in worst of all (Sharpe 0.087). Whipsaw cost
+   exceeded opportunity cost.
+8. **Exposure charts confirm the v1 opportunity-cost diagnosis.** 5-day zips in and
+   out constantly (343 orders); 45-day holds for long stretches (39 orders), and
+   CAGR rises with holding period.
+
+**Chosen:** nothing. No setting is carried forward. Plain long-only Donchian on a
+single index is rejected for 2010–2018.
+
+**Holdout status:** untouched. Nothing here earned a holdout run.
