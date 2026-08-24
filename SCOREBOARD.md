@@ -1,20 +1,24 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **v1 is closed. The sweep settled it: no lookback from 5 to 50 beats buy-and-hold**
-> (best Sharpe 0.419 vs v0's 0.730). The *idea* failed, not the parameter — so
-> there is nothing to rescue by tuning. Full analysis in Parameter sweeps below.
+> **Run `strategies/v1s_donchian_long_short.py` in QuantConnect** and bring back:
+> Compounding Annual Return · Drawdown · Sharpe Ratio · Total Orders.
+> Also glance at the Portfolio Margin chart (should touch 100%, never exceed).
 >
-> The open question is what changes **structurally** next. Candidates, not yet decided:
-> - **v2 (GARCH sizing)** as planned — but note it sizes an entry rule we just
->   showed has no edge on QQQ. Sizing cannot rescue a signal that is not there.
-> - **Change the instrument.** Trend-following classically earns its keep across
->   many uncorrelated assets, or in choppy/falling markets — not on one long-only
->   equity index during the strongest bull run in living memory.
-> - **v3a (Bollinger)** to test whether *any* breakout rule works here, which would
->   separate "breakouts don't work on QQQ" from "Donchian specifically doesn't".
+> This is the long/SHORT flip version at 40/40 — the strategy as originally
+> described. It is not v1 with shorts added: it is never in cash, so v1's
+> opportunity-cost failure cannot occur. Genuinely open question.
 >
-> Discuss with Seb before picking. Do not skip ahead to v4/v5.
+> **Claude's pre-registered prediction: worse than v1 long-only at 40d**
+> (Sharpe 0.400, CAGR 7.01%), and far worse than v0 (0.730 / 15.44%).
+> Note short borrow costs are NOT modelled, so the result is an optimistic
+> upper bound for the short leg.
+>
+> After this, the structural decision from the v1 sweep is still open:
+> (a) v3a Bollinger — does *any* breakout work on QQQ?
+> (b) change the instrument — trend-following suits many uncorrelated assets
+>     or choppy/falling markets, not one long-only index in a historic bull run.
+> Do not skip ahead to v4/v5.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -39,6 +43,7 @@ Read this first to see where things stand. Rules for filling it in are in [READM
 |---|---|---|---|---|---|---|---|---|
 | v0 | `2277fc1` | *(baseline — nothing to beat yet)* | 15.44% | -22.80% | 0.73 | 1 | — | **baseline** |
 | v1 | `77a8ef9` | Sharpe ≥ 0.88 **and** drawdown no worse than 22.80% | 6.61% | -17.20% | 0.434 | 87 | Sharpe −0.30 | **CUT** |
+| v1s | | Sharpe ≥ 0.88. Claude predicts **worse** than v1@40d (0.400) | | | | | | pending |
 | v1s | | | | | | | | |
 | v2 | | | | | | | | |
 | v3a | | | | | | | | |
