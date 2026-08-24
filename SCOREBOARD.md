@@ -44,7 +44,6 @@ Read this first to see where things stand. Rules for filling it in are in [READM
 | v0 | `2277fc1` | *(baseline — nothing to beat yet)* | 15.44% | -22.80% | 0.73 | 1 | — | **baseline** |
 | v1 | `77a8ef9` | Sharpe ≥ 0.88 **and** drawdown no worse than 22.80% | 6.61% | -17.20% | 0.434 | 87 | Sharpe −0.30 | **CUT** |
 | v1s | | Sharpe ≥ 0.88. Claude predicts **worse** than v1@40d (0.400) | | | | | | pending |
-| v1s | | | | | | | | |
 | v2 | | | | | | | | |
 | v3a | | | | | | | | |
 | v3b | | | | | | | | |
