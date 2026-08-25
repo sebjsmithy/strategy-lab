@@ -1,24 +1,22 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **Run `strategies/v1s_donchian_long_short.py` in QuantConnect** and bring back:
-> Compounding Annual Return · Drawdown · Sharpe Ratio · Total Orders.
-> Also glance at the Portfolio Margin chart (should touch 100%, never exceed).
+> **v1s is CUT — it lost money (Sharpe −0.097, CAGR −2.18%, drawdown 47.2%).**
+> Donchian is now rejected on QQQ in *both* configurations: long/flat and
+> long/short. The parameter was not the problem and neither was the direction
+> logic. **The instrument is the problem.**
 >
-> This is the long/SHORT flip version at 40/40 — the strategy as originally
-> described. It is not v1 with shorts added: it is never in cash, so v1's
-> opportunity-cost failure cannot occur. Genuinely open question.
+> **Diagnosis:** breakout/trend rules need assets that make large sustained
+> directional moves. QQQ grinds upward with mean-reverting noise, so buy-and-hold
+> captures the drift and any rule that exits just pays whipsaw. And its upward
+> drift makes the short leg structurally loss-making.
 >
-> **Claude's pre-registered prediction: worse than v1 long-only at 40d**
-> (Sharpe 0.400, CAGR 7.01%), and far worse than v0 (0.730 / 15.44%).
-> Note short borrow costs are NOT modelled, so the result is an optimistic
-> upper bound for the short leg.
+> **Next: `v2a` — same Donchian 40/40 long/short, different instrument.**
+> One change only: the asset. Candidates discussed — a commodity/managed-futures
+> style market (crude, gold, broad commodities) or crypto. Then `v2b` extends to
+> a diversified basket, which is how trend-following is actually run.
 >
-> After this, the structural decision from the v1 sweep is still open:
-> (a) v3a Bollinger — does *any* breakout work on QQQ?
-> (b) change the instrument — trend-following suits many uncorrelated assets
->     or choppy/falling markets, not one long-only index in a historic bull run.
-> Do not skip ahead to v4/v5.
+> Decide the instrument with Seb before writing. Do not skip ahead to v4/v5.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -43,7 +41,7 @@ Read this first to see where things stand. Rules for filling it in are in [READM
 |---|---|---|---|---|---|---|---|---|
 | v0 | `2277fc1` | *(baseline — nothing to beat yet)* | 15.44% | -22.80% | 0.73 | 1 | — | **baseline** |
 | v1 | `77a8ef9` | Sharpe ≥ 0.88 **and** drawdown no worse than 22.80% | 6.61% | -17.20% | 0.434 | 87 | Sharpe −0.30 | **CUT** |
-| v1s | | Sharpe ≥ 0.88. Claude predicts **worse** than v1@40d (0.400) | | | | | | pending |
+| v1s | `f304583` | Sharpe ≥ 0.88. Claude predicts **worse** than v1@40d (0.400) | **-2.18%** | **-47.20%** | **-0.097** | 108 | Sharpe −0.50 | **CUT** |
 | v2 | | | | | | | | |
 | v3a | | | | | | | | |
 | v3b | | | | | | | | |
@@ -113,6 +111,49 @@ Short notes on what happened and why — especially for anything cut. A cut comp
 - **PSR 1.929%** (v0: 13.135%). Probabilistic Sharpe Ratio — roughly, the
   confidence that the true Sharpe is above zero. Very low. Even this modest
   Sharpe is not statistically solid.
+
+### v1s — Donchian 40/40, long AND short (the flip version)
+- **Status:** CUT — the worst result in the project. It lost money.
+- **File:** `strategies/v1s_donchian_long_short.py` @ `f304583`
+- **Result:** CAGR **−2.177%** · Max DD **47.20%** · Sharpe **−0.097** · 108 orders
+- **Start $100,000 → end $82,018.17.** Net profit −17.98%. Fees $492.77.
+- **Prediction was correct, and then some.** Claude pre-registered "worse than v1
+  long-only at 40d (0.400), far worse than v0 (0.730)". Actual: −0.097. The
+  prediction did not anticipate an outright loss.
+
+**Where the money went — the win rate collapse:**
+
+| | v1 @ 40d (long only) | v1s @ 40/40 (long+short) |
+|---|---|---|
+| Sharpe | 0.400 | **−0.097** |
+| CAGR | 7.01% | **−2.18%** |
+| Max drawdown | 26.5% | **47.20%** |
+| Win rate | **65%** | **37%** |
+| Orders | 42 | 108 |
+| Profit-loss ratio | 1.54 | 1.54 |
+
+The per-trade edge is *unchanged* — profit-loss ratio is 1.54 in both. Average win
+8.24% vs average loss −5.35% is still asymmetric in the right direction. What broke
+is **frequency**: win rate fell from 65% to 37%. The ~66 extra trades the short leg
+introduced were overwhelmingly losers, because they were shorting an index that
+rose 264% over the window. Expectancy went from +0.560 (v1 @ 20d) to **−0.064**.
+
+**Other observations:**
+- **Drawdown 47.20%** — more than double v0's 22.80%. The flip mechanic means you
+  are always fully exposed, so being wrong costs full freight with no cash buffer.
+- **The equity curve peaked in early 2011 (~$120k) and never made a new high.**
+  The "Drawdown Recovery: 184" figure is therefore not meaningful here — the
+  strategy spent the entire remaining 8 years underwater.
+- **PSR 0.004%** — effectively zero confidence the Sharpe is above zero.
+- **Shorts were free in this test** (no borrow costs modelled). Real costs would
+  make it worse still, so the rejection holds a fortiori — exactly the reasoning
+  used to justify running it without the cost model.
+- Research Guide moved to "10 Parameters — Possible Overfitting", up from 8,
+  because two lookback variables were declared instead of one. Cosmetic.
+
+**Conclusion:** the Donchian rule family is now rejected on QQQ in both
+configurations — long/flat and long/short. The problem is not the parameter and not
+the direction logic. See "Where next" below.
 
 ---
 
