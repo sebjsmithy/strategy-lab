@@ -1,36 +1,31 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **DECISION POINT — discuss with Seb, do not pick unilaterally.**
+> **THE HOLDOUT RUN — this is the final experiment. Read [HOLDOUT.md](HOLDOUT.md) first.**
 >
-> **v2b is CUT** (Sharpe 0.048 vs a 0.135 bar) — but vol scaling worked exactly as
-> designed: +92% return, −40% drawdown, expectancy nearly tripled. The sizing was
-> fixed; the underlying edge is what is missing. In this era the strategy earns
-> roughly what cash pays.
+> Run these three files in QuantConnect, **once each**, and record the numbers:
 >
-> **The build-window ladder is effectively finished.** The remaining rungs no
-> longer make sense: v3 was parameter-robustness, but the blended 1/3/12-month
-> signal has no parameters to sweep; v4/v5 add regime logic on top of a strategy
-> with no edge to modulate.
+> 1. `strategies/v0b_buyhold_basket_holdout.py` — **H0**, the benchmark
+> 2. `strategies/v2a_holdout.py` — **H1**, trend signal, equal dollars
+> 3. `strategies/v2b_holdout.py` — **H2**, trend signal, equal risk
 >
-> Two genuine options remain:
+> For each take: Compounding Annual Return · Drawdown · Sharpe · Total Orders.
+> Also grab the equity curve for H2 — the *shape* matters as much as the number,
+> specifically whether 2022 carries it.
 >
-> **(a) v2c — GARCH volatility instead of realised volatility.** Seb's original
-> component #1, and a clean single-variable test. Honest expectation: a refinement,
-> not a step change. Likely moves Sharpe by hundredths, not tenths. Also unverified
-> whether QuantConnect provides the `arch` package.
+> **THE RULE, and it is the one that matters:** after these three runs, change
+> nothing and re-run nothing. No adjusting the lookback, no adding markets, no
+> tweaking the vol target "just to see". The holdout is spent the moment it is
+> read, and every temptation afterwards converts an out-of-sample test into an
+> in-sample one — destroying the only clean evidence this project has.
 >
-> **(b) Spend the holdout (2017 → today) as an era test.** The strongest remaining
-> experiment. Our entire diagnosis has been that 2008–2016 is a bad era for this
-> strategy; the holdout contains COVID and the 2022 inflation shock, when
-> trend-followers did famously well. **If this is run, pre-register the prediction
-> first**, run exactly once, and be clear it tests the *era hypothesis* — it does
-> not convert a CUT strategy into a validated one, since the era was chosen
-> knowingly.
+> **Predictions are already committed** in HOLDOUT.md, timestamped before the run.
+> Claude's record so far: wrong on v2a, right on v1s and v2b.
 >
-> After either, the honest move is to **write up the finding**. Six recorded
-> experiments, a literature basis, reproducible code, and a clear negative result
-> is a legitimate project outcome — not a failure.
+> **After this: write up the project.** Six build-window experiments plus a clean
+> out-of-sample test, a literature basis, reproducible code with commit hashes,
+> and a measured universe analysis. Whatever the numbers say, that is a real
+> piece of work and a legitimate outcome.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -85,9 +80,20 @@ A version is `KEPT` only if **all four** criteria in README §5 hold: Sharpe +0.
 
 **Do not fill this in until the build-window ladder is finished.** One run, then it's spent.
 
-| v | Commit | CAGR | Max DD | Sharpe | Trades | Held up? |
+**Window: 2017-01-01 → 2025-12-31.** Pre-registered in [HOLDOUT.md](HOLDOUT.md)
+before any run. Three arms, one run each.
+
+| Run | File | What it is | CAGR | Max DD | Sharpe | Trades |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| **H0** | `v0b_buyhold_basket_holdout.py` | benchmark — equal weight, always long | | | | |
+| **H1** | `v2a_holdout.py` | trend signal, equal dollars | | | | |
+| **H2** | `v2b_holdout.py` | trend signal, equal risk | | | | |
+
+`H0 → H1` isolates **the signal**. `H1 → H2` isolates **the sizing**.
+
+Claude's pre-registered predictions: H2 Sharpe 0.2–0.5 · H2 > H1 · H0 highest raw
+return · H1/H2 lower drawdown than H0 · lumpy curve with a 2022 jump · 2020 mixed.
+Flagged in HOLDOUT.md as informed rather than blind.
 
 ---
 
