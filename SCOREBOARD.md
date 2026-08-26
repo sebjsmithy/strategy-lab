@@ -1,26 +1,33 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **v2a is CUT** — Sharpe −0.015, CAGR 0.79%, i.e. it earned nothing above cash
-> while carrying a 17% drawdown. Claude's 0.3–0.6 prediction was wrong.
+> **Run `strategies/v2b_trend_basket_volscaled.py` in QuantConnect** and bring back:
+> Compounding Annual Return · Drawdown · Sharpe Ratio · Total Orders.
 >
-> **Run `v2b` next: same strategy, with volatility scaling.** This is the one
-> clean attributable comparison in the whole project — a single variable changed
-> against a measured baseline.
+> **This is the cleanest single-variable test in the project.** Identical to v2a in
+> universe, signal, window, costs and schedule. Only sizing changes: equal *dollars*
+> → equal *risk*. Gross exposure is held at 100% in both, so nothing is explained by
+> leverage.
 >
-> **Set expectations honestly.** Vol scaling does two separate things:
-> (a) **re-weights between markets** so each contributes equal risk — this *can*
-> genuinely improve Sharpe, and is the only real hope here; and
-> (b) **scales the whole book** to hit a 10% vol target (from 7.4% today, so ~1.35×
-> leverage) — this changes return and risk proportionally and **cannot improve
-> Sharpe**. If the underlying signal has no edge, (b) just produces a larger zero.
+> The re-weighting is material, not cosmetic — measured 4.7× vol spread across the
+> basket (see `UNIVERSE.md`). Bonds and the dollar roughly double; silver and
+> emerging markets roughly halve. Risk contribution goes from a 0.73%–3.45% spread
+> to a flat 1.65% per market.
 >
-> So the honest question v2b answers is narrow: *was equal-dollar weighting
-> throwing away Sharpe that equal-risk weighting recovers?*
+> **KEEP bar: Sharpe ≥ 0.135.**
+> **Claude's prediction:** beats v2a, but probably still under 0.3. Flagged as *not*
+> a blind forecast — it is informed by knowing 2008–2016 was a bond bull market, and
+> v2b shifts capital toward bonds. Discount accordingly. Claude was wrong on v2a
+> (predicted 0.3–0.6, actual −0.015).
 >
-> If v2b also comes in near zero, the finding is real and worth writing up:
-> this strategy did not work in this era on this universe. That is a legitimate
-> result, not a failed project. Do not skip ahead to v4/v5.
+> **If v2b also lands near zero**, that is the finding, and it is a real one:
+> this strategy did not work in this era on this universe, tested properly.
+> Write it up rather than reaching for v4/v5.
+>
+> **Deliberately deferred to a possible v2c:** (a) portfolio-level vol targeting to
+> 10% — pure leverage, cannot change Sharpe, would only inflate CAGR; (b) GARCH
+> instead of realised volatility as the sizing input — a genuine "does a better vol
+> forecast help?" question, worth its own row. One change at a time.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -60,7 +67,7 @@ Read this first to see where things stand. Rules for filling it in are in [READM
 | v1 | `77a8ef9` | Sharpe ≥ 0.88 **and** drawdown no worse than 22.80% | 6.61% | -17.20% | 0.434 | 87 | Sharpe −0.30 | **CUT** |
 | v1s | `f304583` | Sharpe ≥ 0.88. Claude predicts **worse** than v1@40d (0.400) | **-2.18%** | **-47.20%** | **-0.097** | 108 | Sharpe −0.50 | **CUT** |
 | **v2a** | `0dffed2` | Sharpe ≥ 0.50. Claude predicted 0.3–0.6 — **wrong** | 0.79% | -17.10% | **-0.015** | 870 | — (new window) | **CUT** |
-| v2b | | Beats v2a on Sharpe by ≥ 0.15 (vol-scaling earns its place) | | | | | | queued |
+| **v2b** | | Sharpe ≥ 0.135 (beats v2a's −0.015 by 0.15). Claude predicts it beats v2a but stays under 0.3 | | | | | | pending |
 | v3 | | robustness checks on whatever survives | | | | | | — |
 | v4 | | Markov conviction scaling | | | | | | — |
 | v5 | | regime-based strategy selection | | | | | | — |
