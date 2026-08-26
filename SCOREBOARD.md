@@ -1,23 +1,26 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **Run `strategies/v2a_trend_basket.py` in QuantConnect** and bring back:
-> Compounding Annual Return · Drawdown · Sharpe Ratio · Total Orders.
-> Also check Exposure and Portfolio Margin — gross should stay at or below 100%.
+> **v2a is CUT** — Sharpe −0.015, CAGR 0.79%, i.e. it earned nothing above cash
+> while carrying a 17% drawdown. Claude's 0.3–0.6 prediction was wrong.
 >
-> First paper-faithful version: 10-ETF basket, signal is the sign of past return
-> blended equally across 1/3/12-month lookbacks, long and short, monthly rebalance,
-> **equal weight (no vol-scaling)**. New build window 2008–2016.
+> **Run `v2b` next: same strategy, with volatility scaling.** This is the one
+> clean attributable comparison in the whole project — a single variable changed
+> against a measured baseline.
 >
-> **Claude's pre-registered prediction:** positive but unspectacular, Sharpe
-> roughly 0.3–0.6, with v2b beating it. KEEP bar is Sharpe ≥ 0.50.
+> **Set expectations honestly.** Vol scaling does two separate things:
+> (a) **re-weights between markets** so each contributes equal risk — this *can*
+> genuinely improve Sharpe, and is the only real hope here; and
+> (b) **scales the whole book** to hit a 10% vol target (from 7.4% today, so ~1.35×
+> leverage) — this changes return and risk proportionally and **cannot improve
+> Sharpe**. If the underlying signal has no edge, (b) just produces a larger zero.
 >
-> **When reading the result:** the build window includes 2008, an exceptional year
-> for trend-following. Check the equity curve, not just the summary — a strong
-> number carried entirely by one year is not the same as a consistent one.
+> So the honest question v2b answers is narrow: *was equal-dollar weighting
+> throwing away Sharpe that equal-risk weighting recovers?*
 >
-> Then `v2b` adds volatility scaling — the single clean attributable comparison.
-> Do not skip ahead to v4/v5.
+> If v2b also comes in near zero, the finding is real and worth writing up:
+> this strategy did not work in this era on this universe. That is a legitimate
+> result, not a failed project. Do not skip ahead to v4/v5.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -56,7 +59,7 @@ Read this first to see where things stand. Rules for filling it in are in [READM
 | v0 | `2277fc1` | *(baseline — nothing to beat yet)* | 15.44% | -22.80% | 0.73 | 1 | — | **baseline** |
 | v1 | `77a8ef9` | Sharpe ≥ 0.88 **and** drawdown no worse than 22.80% | 6.61% | -17.20% | 0.434 | 87 | Sharpe −0.30 | **CUT** |
 | v1s | `f304583` | Sharpe ≥ 0.88. Claude predicts **worse** than v1@40d (0.400) | **-2.18%** | **-47.20%** | **-0.097** | 108 | Sharpe −0.50 | **CUT** |
-| **v2a** | | Sharpe ≥ 0.50. Claude predicts 0.3–0.6, and that v2b beats it | | | | | | pending |
+| **v2a** | `0dffed2` | Sharpe ≥ 0.50. Claude predicted 0.3–0.6 — **wrong** | 0.79% | -17.10% | **-0.015** | 870 | — (new window) | **CUT** |
 | v2b | | Beats v2a on Sharpe by ≥ 0.15 (vol-scaling earns its place) | | | | | | queued |
 | v3 | | robustness checks on whatever survives | | | | | | — |
 | v4 | | Markov conviction scaling | | | | | | — |
@@ -168,6 +171,69 @@ rose 264% over the window. Expectancy went from +0.560 (v1 @ 20d) to **−0.064*
 **Conclusion:** the Donchian rule family is now rejected on QQQ in both
 configurations — long/flat and long/short. The problem is not the parameter and not
 the direction logic. See "Where next" below.
+
+### v2a — 10-ETF basket, blended 1/3/12-month trend, equal weight
+- **Status:** CUT — failed its bar. But the most *informative* run so far.
+- **File:** `strategies/v2a_trend_basket.py` @ `0dffed2`
+- **Window:** 2008-01-01 → 2016-12-31 (new build window)
+- **Result:** CAGR **0.791%** · Max DD **17.10%** · Sharpe **−0.015** · 870 orders
+- **$100,000 → $107,353.73** over nine years. Fees $1,345.89. Turnover 1.78%.
+- **Claude's prediction (0.3–0.6 Sharpe) was wrong.** Recorded as a miss.
+
+**1. Positive return, negative Sharpe — not a contradiction.**
+Sharpe is *excess* return over the risk-free rate, divided by volatility. The
+strategy earned 0.79%/yr while cash over 2008–2016 paid roughly the same. Excess
+return ≈ 0, so Sharpe ≈ 0. **It did not lose money; it earned nothing above cash
+while carrying a 17% drawdown.** For a risk asset that is a failure.
+
+**2. Essentially all the profit came from 2008.**
+Reading the equity curve: ~$100k → ~$120k through late 2008, then eight years of
+chop and decline to $107k. So roughly **+20% in year one and −11% over the
+following eight.** This is exactly the "carried by one year" trap flagged in the
+pre-registration. Strip 2008 and the strategy is clearly negative.
+
+**3. The 2008-up / 2009-down shape is the textbook trend-following signature.**
+Long trends into the 2008 crash, then run over by the violent V-shaped reversal in
+March 2009. Every CTA had a bad 2009 for this reason. **This is mechanically
+reassuring** — the strategy is behaving like a real trend-follower rather than
+like noise. 2015–16 was weak for the same documented reason: choppy, directionless
+markets with no sustained trends.
+
+**4. Diversification worked — on risk, not on return.**
+
+| | v1s (1 market) | v2a (10 markets) |
+|---|---|---|
+| Max drawdown | 47.20% | **17.10%** |
+| Annual std dev | 14.9% | **7.4%** |
+| Sharpe | −0.097 | −0.015 |
+
+Risk fell by roughly two-thirds. The equity curve is far smoother. What
+diversification did not do is manufacture return that was not there.
+
+**5. Realised volatility is only 7.4% against the paper's 10% target.**
+The portfolio is *under-risked* — long and short positions across markets offset
+each other, so net exposure often sits near zero (visible in the Exposure chart,
+long and short ratios both oscillating around 0.2–0.6). Relevant to v2b.
+
+**6. Per-trade statistics collapsed, but are not comparable to v1/v1s.**
+Win rate exactly 50%, average win 0.26% vs average loss −0.24%, profit-loss ratio
+1.09, expectancy 0.036. Each market holds at most 10% of the book so trades are
+small, and the blended signal produces frequent *partial* adjustments (+1 → +⅓)
+rather than round trips. These numbers measure something different from the
+Donchian versions — do not read the drop from 1.88 to 1.09 as a like-for-like
+deterioration.
+
+**7. Estimated strategy capacity fell to $7.1M** (v0: $130M, v1s: $490M), with
+**DBA** named as the binding constraint. DBA is a thinly traded agriculture ETF.
+Irrelevant at $100k, but it flags DBA as the weakest link in the universe.
+
+**8. PSR 0.012%** — effectively zero confidence the Sharpe is above zero.
+
+**What this does and does not tell us.** It does not reject trend-following: the
+strategy behaved correctly, and 2010–2016 is the weakest decade in the papers'
+137-year sample. It does say that **an equal-dollar-weighted version of it earned
+nothing above cash in this era**, and that its one good year was the one crisis in
+the window.
 
 ---
 
