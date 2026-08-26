@@ -1,0 +1,768 @@
+<title>Trend Following, Tested</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --paper:      #F1F4F4;
+    --panel:      #E7ECEC;
+    --ink:        #12191D;
+    --slate:      #5B6C73;
+    --rule:       #D2DBDB;
+    --accent:     #0E7C6B;
+    --flag:       #96503C;
+    --shadow:     rgba(18, 25, 29, 0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:    #0E1416;
+      --panel:    #161E21;
+      --ink:      #E4EAEA;
+      --slate:    #90A2A7;
+      --rule:     #263134;
+      --accent:   #4FBFA9;
+      --flag:     #CE8064;
+      --shadow:   rgba(0, 0, 0, 0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      #0E1416;
+    --panel:      #161E21;
+    --ink:        #E4EAEA;
+    --slate:      #90A2A7;
+    --rule:       #263134;
+    --accent:     #4FBFA9;
+    --flag:       #CE8064;
+    --shadow:     rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    line-height: 1.62;
+    font-weight: 400;
+    margin: 0;
+    padding: 0 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  /* ---- shared column geometry ---- */
+  .col { max-width: 660px; }
+
+  /* ---- masthead ---- */
+  header.masthead {
+    padding: 72px 0 30px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 44px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin: 0 0 22px;
+  }
+  h1 {
+    font-size: clamp(40px, 7vw, 68px);
+    font-weight: 500;
+    line-height: 1.02;
+    letter-spacing: -0.022em;
+    margin: 0 0 20px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: clamp(19px, 2.2vw, 22px);
+    line-height: 1.5;
+    color: var(--slate);
+    max-width: 620px;
+    margin: 0 0 32px;
+  }
+  .byline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--slate);
+  }
+  .byline b { color: var(--ink); font-weight: 500; }
+
+  /* ---- verdict panel ---- */
+  .verdict {
+    background: var(--panel);
+    border-left: 3px solid var(--flag);
+    padding: 30px 34px;
+    margin: 0 0 60px;
+  }
+  .verdict h2 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--flag);
+    margin: 0 0 16px;
+  }
+  .verdict p { margin: 0 0 14px; font-size: 19px; }
+  .verdict p:last-child { margin-bottom: 0; }
+
+  .keynums {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 26px;
+    margin: 26px 0 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+  }
+  .keynum .n {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 26px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    display: block;
+    line-height: 1.1;
+  }
+  .keynum .l {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--slate);
+    display: block;
+    margin-top: 7px;
+    line-height: 1.4;
+  }
+
+  /* ---- sections with hanging markers ---- */
+  section { margin: 0 0 62px; }
+  .shead {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    gap: 0 22px;
+    align-items: baseline;
+    margin: 0 0 22px;
+  }
+  .smark {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding-top: 12px;
+    white-space: nowrap;
+  }
+  h2.stitle {
+    font-size: clamp(26px, 3.6vw, 34px);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .sbody { padding-left: 114px; }
+  @media (max-width: 720px) {
+    .shead { grid-template-columns: 1fr; gap: 8px; }
+    .smark { padding-top: 0; }
+    .sbody { padding-left: 0; }
+  }
+
+  p { margin: 0 0 20px; max-width: 660px; }
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    margin: 38px 0 14px;
+    max-width: 660px;
+  }
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, .yr:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    font-variant-numeric: tabular-nums;
+  }
+  code { background: var(--panel); padding: 1px 5px; border-radius: 2px; }
+
+  /* ---- pull quote ---- */
+  .pull {
+    border-left: 2px solid var(--accent);
+    padding: 4px 0 4px 24px;
+    margin: 32px 0;
+    max-width: 620px;
+    font-size: 21px;
+    line-height: 1.45;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  /* ---- tables ---- */
+  .tscroll { overflow-x: auto; margin: 28px 0 32px; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 560px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  caption {
+    text-align: left;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--slate);
+    padding-bottom: 12px;
+  }
+  th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 10.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--slate);
+    padding: 0 14px 9px 0;
+    border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  td.num, th.num { text-align: right; padding-right: 20px; }
+  tbody tr:last-child td { border-bottom: 1px solid var(--ink); }
+  .vname { font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .note { color: var(--slate); font-family: "Newsreader", Georgia, serif; font-size: 15px; }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .tag-cut  { color: var(--flag); }
+  .tag-base { color: var(--slate); }
+  .tag-keep { color: var(--accent); }
+
+  .up   { color: var(--accent); }
+  .down { color: var(--flag); }
+
+  /* ---- chart ---- */
+  figure { margin: 36px 0 34px; }
+  .chartbox {
+    background: var(--panel);
+    padding: 26px 22px 18px;
+    overflow-x: auto;
+  }
+  figcaption {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--slate);
+    margin-top: 14px;
+    max-width: 660px;
+  }
+  .legend {
+    display: flex;
+    gap: 22px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .swatch {
+    display: inline-block;
+    width: 11px; height: 11px;
+    margin-right: 7px;
+    vertical-align: -1px;
+  }
+
+  /* ---- scorecard ---- */
+  .cards { display: grid; gap: 2px; margin: 28px 0 8px; background: var(--rule); border: 1px solid var(--rule); }
+  .card {
+    background: var(--paper);
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 34px 1fr 96px;
+    gap: 18px;
+    align-items: start;
+  }
+  .card .idx {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--slate);
+    padding-top: 2px;
+  }
+  .card .txt { font-size: 16.5px; line-height: 1.45; }
+  .card .txt small { display: block; color: var(--slate); font-size: 14px; margin-top: 4px; }
+  .card .res {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: right;
+    padding-top: 3px;
+  }
+  @media (max-width: 640px) {
+    .card { grid-template-columns: 26px 1fr; }
+    .card .res { grid-column: 2; text-align: left; padding-top: 6px; }
+  }
+
+  /* ---- method footer ---- */
+  .method {
+    border-top: 2px solid var(--ink);
+    margin-top: 76px;
+    padding-top: 34px;
+  }
+  .mgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 30px;
+    margin-top: 26px;
+  }
+  .mgrid h4 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin: 0 0 10px;
+  }
+  .mgrid p { font-size: 15.5px; line-height: 1.55; margin: 0; }
+
+  ul { max-width: 660px; padding-left: 22px; margin: 0 0 20px; }
+  li { margin-bottom: 9px; }
+  li::marker { color: var(--slate); }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Strategy research · Build 2008–2016 · Holdout 2017–2025</p>
+    <h1>Trend Following, Tested</h1>
+    <p class="standfirst">Six experiments asking whether a well-documented trading strategy still works. It doesn't — at least not the way we built it. Here is the whole investigation, including everything we got wrong.</p>
+    <div class="byline">
+      <span>By <b>Sebastian Smith</b></span>
+      <span>Repo <b>sebjsmithy/strategy-lab</b></span>
+      <span>Engine <b>QuantConnect / LEAN</b></span>
+      <span><b>August 2026</b></span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <h2>The finding</h2>
+    <p><strong>A diversified trend-following strategy, built to follow two peer-reviewed papers, failed to beat simply buying and holding the same ten markets — in both of the two eras we tested.</strong></p>
+    <p>Over nine out-of-sample years the benchmark more than doubled the account. The strategy returned about a quarter. It did reliably reduce drawdowns, and it genuinely protected in both years the benchmark lost money. It was nowhere near worth what that cost.</p>
+    <div class="keynums">
+      <div class="keynum"><span class="n">8.58%</span><span class="l">Benchmark<br>annual return</span></div>
+      <div class="keynum"><span class="n down">2.62%</span><span class="l">Strategy<br>annual return</span></div>
+      <div class="keynum"><span class="n down">−0.239</span><span class="l">Strategy Sharpe<br>out of sample</span></div>
+      <div class="keynum"><span class="n up">+12.3pt</span><span class="l">Strategy edge<br>in 2022</span></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="shead">
+      <div class="smark">Origin</div>
+      <h2 class="stitle">A project that had to be abandoned first</h2>
+    </div>
+    <div class="sbody">
+      <p>This started somewhere else entirely. The original plan was to read financial news with an AI model, score the sentiment, and trade on it. It got as far as a working prototype before three problems became impossible to ignore.</p>
+      <p><strong>Speed.</strong> When market-moving news breaks, professional firms react in milliseconds, on feeds that arrive before public ones. By the time a story reaches a free RSS feed, the price has already moved. That is not a coding problem — it is a budget and physics problem.</p>
+      <p><strong>Data quality.</strong> The news dataset available to us was roughly 2,800 Zacks articles, 1,000 paid press releases and 900 Motley Fool pieces. No Reuters, no Bloomberg, no FT. Retail content written after the move, for clicks.</p>
+      <p><strong>Redundancy.</strong> The dataset already shipped sentiment labels generated by a language model. The pipeline was deliberately ignoring them in order to re-derive the same thing, less accurately, with a smaller model.</p>
+      <p>So we stopped, and picked a question small enough to actually answer: <em>does a simple, well-documented trend-following rule make money?</em></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div class="smark">Attempt 1</div>
+      <h2 class="stitle">One market, and three ways to be wrong</h2>
+    </div>
+    <div class="sbody">
+      <p>The first strategy was a <strong>breakout rule</strong>: buy when the price rises above its highest level of the last twenty days, sell when it falls below the twenty-day low. The bet is that a price making new highs keeps making new highs. We tested it on QQQ, the NASDAQ-100 tracker.</p>
+      <p>Before testing anything, we measured the thing we had to beat: <strong>buy QQQ on day one and do nothing for nine years.</strong> That returned 15.44% a year. It is not skill — it is the market — but nothing is worth building unless it beats it.</p>
+
+      <div class="tscroll">
+        <table>
+          <caption>Build window · QQQ · 2010–2018</caption>
+          <thead>
+            <tr>
+              <th>Version</th><th>What it was</th>
+              <th class="num">Return</th><th class="num">Drawdown</th><th class="num">Sharpe</th><th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="vname">v0</td><td class="note">Buy &amp; hold QQQ</td>
+              <td class="num">15.44%</td><td class="num">−22.8%</td><td class="num">0.730</td>
+              <td><span class="tag tag-base">Baseline</span></td>
+            </tr>
+            <tr>
+              <td class="vname">v1</td><td class="note">Breakout, long only</td>
+              <td class="num">6.61%</td><td class="num">−17.2%</td><td class="num">0.434</td>
+              <td><span class="tag tag-cut">Cut</span></td>
+            </tr>
+            <tr>
+              <td class="vname">v1-sweep</td><td class="note">Every lookback, 5 to 50 days</td>
+              <td class="num">7.39%</td><td class="num">−27.2%</td><td class="num">0.419</td>
+              <td><span class="tag tag-cut">Cut</span></td>
+            </tr>
+            <tr>
+              <td class="vname">v1s</td><td class="note">Breakout, long <em>and</em> short</td>
+              <td class="num down">−2.18%</td><td class="num down">−47.2%</td><td class="num down">−0.097</td>
+              <td><span class="tag tag-cut">Cut</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Each failure taught something different, and the second one is the most useful thing in this whole document.</p>
+
+      <h3>The rule wasn't broken. It was out of the market.</h3>
+      <p>v1 made money on its trades — it won 54% of the time and its wins were nearly twice the size of its losses. What killed it was <strong>opportunity cost</strong>: it sat in cash through the strongest stretch of a historic bull market. It cut drawdowns from 22.8% to 17.2%, then gave up more than half the return to do it.</p>
+
+      <h3>The number we'd recorded was partly luck</h3>
+      <p>We then tested every lookback from 5 to 50 days. No setting beat buy-and-hold. But the shape of the results mattered more than the winner:</p>
+      <div class="tscroll">
+        <table style="min-width:420px">
+          <caption>Sharpe ratio by lookback period</caption>
+          <tbody>
+            <tr><td class="vname">5 days</td><td class="num">0.253</td><td class="note">—</td></tr>
+            <tr><td class="vname">10 days</td><td class="num">0.087</td><td class="note">—</td></tr>
+            <tr><td class="vname">15 days</td><td class="num">0.158</td><td class="note">—</td></tr>
+            <tr><td class="vname">20 days</td><td class="num">0.434</td><td class="note">← the value we had recorded</td></tr>
+            <tr><td class="vname">30 days</td><td class="num">0.279</td><td class="note">—</td></tr>
+            <tr><td class="vname">40 days</td><td class="num">0.400</td><td class="note">—</td></tr>
+            <tr><td class="vname">45 days</td><td class="num">0.419</td><td class="note">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Twenty days sits as a lone spike between two much worse neighbours. Had we picked 15 or 30 as the obvious default, v1 would have looked far worse. <strong>Our headline number was partly a coincidence we had fallen in love with.</strong> Only 40 and 45 — adjacent values that agree with each other — look like a real effect rather than noise.</p>
+
+      <h3>Shorting an index that triples is a bad idea</h3>
+      <p>Adding short trades produced the worst result of the project: −2.18% a year and a 47% drawdown. The per-trade edge was unchanged, but the win rate collapsed from 65% to 37%, because every short position was betting against an index that rose 264%.</p>
+      <p class="pull">Stock indexes drift upward. Betting against one is fighting gravity. Shorting was wrong <em>on QQQ specifically</em>, not wrong in general — which turned out to matter.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div class="smark">The turn</div>
+      <h2 class="stitle">We had been running one line of a sixty-line portfolio</h2>
+    </div>
+    <div class="sbody">
+      <p>At this point we stopped guessing and read the research. Two papers define this field:</p>
+      <ul>
+        <li><strong>Moskowitz, Ooi &amp; Pedersen (2012)</strong>, <em>Time Series Momentum</em> — 58 futures markets, 1985–2009.</li>
+        <li><strong>Hurst, Ooi &amp; Pedersen (2017)</strong>, <em>A Century of Evidence on Trend-Following Investing</em> — 67 markets, 1880–2016.</li>
+      </ul>
+      <p>One line from the second paper reframed everything we had done. Across 67 markets and 137 years, the strategy delivered positive returns in <em>every single market</em> — at an average Sharpe ratio of about <strong>0.4</strong>.</p>
+      <p>That number is real, and it is far too weak to detect in one market over nine years. <strong>Our QQQ failures were not evidence against trend-following. They were structurally incapable of testing it.</strong> The strategy has never been a single-asset strategy — it works by stacking many weak, uncorrelated bets until they add up.</p>
+      <p>Three other things in the papers contradicted what we had built. Their signal is simply the <em>sign of the past return</em>, not a channel breakout. They blend three lookbacks — 1, 3 and 12 months — rather than choosing one, which removes the parameter-tuning problem entirely. And they scale every position by volatility, treating that as part of the strategy rather than a refinement.</p>
+      <p>We had also never tested anything near their main signal. Our sweep covered 5 to 50 days. Their primary lookback is <strong>252 days</strong>.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div class="smark">Attempt 2</div>
+      <h2 class="stitle">Ten markets, built to the paper</h2>
+    </div>
+    <div class="sbody">
+      <p>The rebuild used ten exchange-traded funds spanning four asset classes, weighted toward commodities to match the papers' roughly 43% commodity composition:</p>
+      <div class="tscroll">
+        <table style="min-width:480px">
+          <caption>The universe</caption>
+          <tbody>
+            <tr><td class="vname">GLD SLV DBC DBA</td><td class="note">Gold, silver, broad commodities, agriculture</td></tr>
+            <tr><td class="vname">SPY EFA EEM</td><td class="note">US, developed international and emerging equities</td></tr>
+            <tr><td class="vname">TLT IEF</td><td class="note">Long and intermediate US government bonds</td></tr>
+            <tr><td class="vname">UUP</td><td class="note">The US dollar against a basket of currencies</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Each month, for each market, we ask three questions: is the price higher than it was 1 month ago? 3 months ago? 12 months ago? Each answer is a yes or a no. Average the three, and the position size scales with how much the timescales agree — full position when all three point the same way, a third of a position when they disagree. When trends are ambiguous, exposure shrinks automatically.</p>
+
+      <h3>What we measured before running it</h3>
+      <p>Before testing the sizing change, we measured how volatile each market actually was over the build window. The spread was <strong>4.7×</strong> — silver moved 34.5% a year, intermediate bonds 7.3%.</p>
+      <p>That mattered more than it sounds. Under equal-dollar weighting, silver and emerging markets were contributing four to five times the risk of the bond and dollar positions. <strong>The portfolio's results were effectively decided by three of its ten markets</strong>, regardless of whether the other seven had the right signals.</p>
+      <p>We also measured how correlated the markets were, and found that ten tickers behave like about <strong>five independent bets</strong>. The three equity funds move together (0.88–0.92). The two bond funds move together (0.91). Gold and silver move together (0.80). That caps the realistic best case for this universe near a Sharpe of 0.9 — and means adding more equity funds would have added nothing at all.</p>
+
+      <div class="tscroll">
+        <table>
+          <caption>Build window · 10-ETF basket · 2008–2016</caption>
+          <thead>
+            <tr><th>Version</th><th>Sizing</th><th class="num">Return</th><th class="num">Drawdown</th><th class="num">Sharpe</th><th>Verdict</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="vname">v2a</td><td class="note">Equal dollars per market</td>
+              <td class="num">0.79%</td><td class="num">−17.1%</td><td class="num down">−0.015</td>
+              <td><span class="tag tag-cut">Cut</span></td>
+            </tr>
+            <tr>
+              <td class="vname">v2b</td><td class="note">Equal <em>risk</em> per market</td>
+              <td class="num">1.52%</td><td class="num">−10.2%</td><td class="num">0.048</td>
+              <td><span class="tag tag-cut">Cut</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Volatility scaling worked exactly as predicted — it nearly doubled the return, cut the drawdown by 40%, and almost tripled the per-trade expectancy. But it improved a strategy that had no edge to begin with. <strong>A better-sized version of nothing is still nothing.</strong> A 1.5% annual return was roughly what a savings account paid over the same period.</p>
+      <p>Diversification worked too, on risk: moving from one market to ten cut the maximum drawdown from 47% to 17%. What it could not do was manufacture a return that was not there.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div class="smark">The exam</div>
+      <h2 class="stitle">One shot at nine untouched years</h2>
+    </div>
+    <div class="sbody">
+      <p>From the start, we split the data and never looked at the second half. Everything above was developed on 2008–2016. The years 2017 onward were held back, unexamined, for a single final test.</p>
+      <p>The reason for that discipline: it is trivially easy to tune a strategy until it fits the past perfectly, at which point it predicts nothing. The only defence is to test it once on data you have never seen, having written down your predictions beforehand.</p>
+      <p>So before running anything, we committed a document stating what we expected, what result would count as success, and — critically — <strong>what result would prove our own explanation wrong.</strong> Our standing theory was that the strategy had underperformed because 2010–2016 was, by the papers' own data, the weakest decade for trend-following in 137 years. The holdout contained the COVID crash and the 2022 inflation shock, when trend-followers publicly had some of their best years in decades.</p>
+      <p>We wrote: <em>if the strategy again lands near zero, the era explanation fails, and the likelier reading is that our implementation does not capture what the papers capture.</em></p>
+      <p>Then we ran three versions, once each: the benchmark, the strategy with equal-dollar sizing, and the strategy with volatility sizing.</p>
+
+      <div class="tscroll">
+        <table>
+          <caption>Holdout · 2017–2025 · one run each, nothing tuned afterwards</caption>
+          <thead>
+            <tr><th>Run</th><th>What it is</th><th class="num">Return</th><th class="num">Drawdown</th><th class="num">Sharpe</th><th class="num">Final equity</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="vname">H0</td><td class="note">Benchmark — hold all ten, equal weight</td>
+              <td class="num up">8.58%</td><td class="num">−16.8%</td><td class="num up">0.448</td><td class="num up">$209,911</td>
+            </tr>
+            <tr>
+              <td class="vname">H1</td><td class="note">Trend signal, equal dollars</td>
+              <td class="num">2.77%</td><td class="num">−15.5%</td><td class="num down">−0.156</td><td class="num">$127,869</td>
+            </tr>
+            <tr>
+              <td class="vname">H2</td><td class="note">Trend signal, equal risk</td>
+              <td class="num">2.62%</td><td class="num up">−12.9%</td><td class="num down">−0.239</td><td class="num">$126,216</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The strategy got <em>worse</em> in the era we had predicted would rescue it — from 0.048 in the build window to −0.239 out of sample. <strong>By the criterion we set in advance, our own explanation is falsified.</strong> The problem was never the decade.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div class="smark">The detail</div>
+      <h2 class="stitle">Year by year, the strategy did exactly one thing well</h2>
+    </div>
+    <div class="sbody">
+      <figure>
+        <div class="chartbox">
+          <div class="legend">
+            <span><span class="swatch" style="background: var(--slate)"></span>Benchmark</span>
+            <span><span class="swatch" style="background: var(--accent)"></span>Strategy (equal risk)</span>
+          </div>
+          <svg viewBox="0 0 780 250" width="780" height="250" role="img" aria-label="Annual returns 2017 to 2025. The benchmark gains in seven of nine years and loses in 2018 and 2022. The strategy gains modestly in most years but gains 5.8 percent in 2022 while the benchmark loses 6.5 percent.">
+            <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--slate)">
+              <text x="38" y="41" text-anchor="end">+30%</text>
+              <text x="38" y="86" text-anchor="end">+20%</text>
+              <text x="38" y="131" text-anchor="end">+10%</text>
+              <text x="38" y="178" text-anchor="end">0</text>
+              <text x="38" y="215" text-anchor="end">−8%</text>
+            </g>
+            <g stroke="var(--rule)" stroke-width="1">
+              <line x1="46" y1="38" x2="762" y2="38"></line>
+              <line x1="46" y1="83" x2="762" y2="83"></line>
+              <line x1="46" y1="128" x2="762" y2="128"></line>
+            </g>
+            <line x1="46" y1="174" x2="762" y2="174" stroke="var(--ink)" stroke-width="1.25"></line>
+
+            <g fill="var(--slate)">
+              <rect x="56"  y="131.7" width="28" height="42.3"></rect>
+              <rect x="135" y="174"   width="28" height="26.1"></rect>
+              <rect x="214" y="111.9" width="28" height="62.1"></rect>
+              <rect x="293" y="117.8" width="28" height="56.2"></rect>
+              <rect x="372" y="136.2" width="28" height="37.8"></rect>
+              <rect x="451" y="174"   width="28" height="29.3"></rect>
+              <rect x="530" y="141.2" width="28" height="32.8"></rect>
+              <rect x="609" y="119.1" width="28" height="54.9"></rect>
+              <rect x="688" y="38.1"  width="28" height="135.9"></rect>
+            </g>
+            <g fill="var(--accent)">
+              <rect x="88"  y="155.5" width="28" height="18.5"></rect>
+              <rect x="167" y="174"   width="28" height="2.7"></rect>
+              <rect x="246" y="174"   width="28" height="5.9"></rect>
+              <rect x="325" y="151.5" width="28" height="22.5"></rect>
+              <rect x="404" y="168.6" width="28" height="5.4"></rect>
+              <rect x="483" y="147.9" width="28" height="26.1"></rect>
+              <rect x="562" y="174"   width="28" height="26.1"></rect>
+              <rect x="641" y="149.7" width="28" height="24.3"></rect>
+              <rect x="720" y="125.4" width="28" height="48.6"></rect>
+            </g>
+
+            <rect x="447" y="30" width="100" height="192" fill="none" stroke="var(--accent)" stroke-width="1.25" stroke-dasharray="3 3" opacity="0.75"></rect>
+            <text x="497" y="24" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="var(--accent)">CRISIS ALPHA</text>
+
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--slate)" text-anchor="middle">
+              <text x="86"  y="240">2017</text>
+              <text x="165" y="240">2018</text>
+              <text x="244" y="240">2019</text>
+              <text x="323" y="240">2020</text>
+              <text x="402" y="240">2021</text>
+              <text x="481" y="240" fill="var(--accent)" font-weight="600">2022</text>
+              <text x="560" y="240">2023</text>
+              <text x="639" y="240">2024</text>
+              <text x="718" y="240">2025</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>Annual returns, holdout window. In both years the benchmark lost money — 2018 and 2022 — the strategy protected. In 2022 it did not merely lose less; it gained 5.8% while the benchmark fell 6.5%.</figcaption>
+      </figure>
+
+      <h3>The one thing that worked</h3>
+      <p>The crisis-protection property is real, and it reproduced out of sample. In 2022 the strategy returned <strong>+5.8% while the benchmark lost 6.5%</strong> — a twelve-point swing in the year it was most needed. In 2018, the other down year, it was essentially flat while the benchmark fell 5.8%. This is precisely the behaviour the papers describe, and we found it in data we had never looked at.</p>
+
+      <h3>Why it wasn't nearly enough</h3>
+      <p>In the seven years the benchmark rose, the strategy captured a fraction of the gain, and twice went outright negative while the market went up — losing 1.3% in 2019 as the benchmark made 13.8%, and losing 5.8% in 2023 as it made 7.3%.</p>
+      <p class="pull">Across nine years you paid roughly six percentage points of annual return to save four points of drawdown. That is a bad trade at any risk tolerance.</p>
+
+      <h3>The failure mode that showed up every single time</h3>
+      <p>2009 destroyed the strategy in the build window. 2023 was the worst year of the holdout. Both came immediately after a strong trend year, and both were sharp reversals: the strategy is positioned for continuation, the market snaps back, and it gets run over. <strong>Across six experiments and two eras, this was the single most consistent way it lost money.</strong></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div class="smark">Accounting</div>
+      <h2 class="stitle">How wrong we were, on the record</h2>
+    </div>
+    <div class="sbody">
+      <p>Six predictions were committed to the repository before the holdout was run, with a timestamp, so they could not be quietly revised afterwards. Two were right.</p>
+
+      <div class="cards">
+        <div class="card">
+          <span class="idx">01</span>
+          <span class="txt">The strategy's Sharpe would land between 0.2 and 0.5, beating its build-window score.<small>It came in at −0.239 — worse, not better.</small></span>
+          <span class="res down">Wrong</span>
+        </div>
+        <div class="card">
+          <span class="idx">02</span>
+          <span class="txt">Volatility scaling would beat equal-dollar sizing again.<small>Flagged in advance as the cleanest test, because it was a replication rather than a guess. It failed on the registered metric.</small></span>
+          <span class="res down">Wrong</span>
+        </div>
+        <div class="card">
+          <span class="idx">03</span>
+          <span class="txt">Buy-and-hold would have the highest raw return.<small>Flagged in advance as contaminated by hindsight.</small></span>
+          <span class="res up">Right</span>
+        </div>
+        <div class="card">
+          <span class="idx">04</span>
+          <span class="txt">The strategy would have smaller drawdowns than the benchmark.<small>Also flagged as contaminated by hindsight.</small></span>
+          <span class="res up">Right</span>
+        </div>
+        <div class="card">
+          <span class="idx">05</span>
+          <span class="txt">The returns would be lumpy, with 2022 carrying the result.<small>Lumpy, yes. But 2025 was the standout year at +10.8%, not 2022 at +5.8%.</small></span>
+          <span class="res">Partial</span>
+        </div>
+        <div class="card">
+          <span class="idx">06</span>
+          <span class="txt">2020 would be mixed at best, because of the violent post-COVID recovery.<small>It returned +5.0%, one of the strategy's better years.</small></span>
+          <span class="res down">Wrong</span>
+        </div>
+      </div>
+
+      <p style="margin-top:26px"><strong>Both correct predictions were the two we had explicitly labelled as guesses made with the benefit of hindsight.</strong> Every genuinely uncertain prediction was wrong, including the one we had singled out as most reliable.</p>
+      <p>That is worth stating plainly, because it is the point. The value came from writing the predictions down beforehand — not from their accuracy. Without that record, it would have been effortless to reread the results and construct a story in which we had understood things all along.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead">
+      <div class="smark">Conclusion</div>
+      <h2 class="stitle">What nine years of testing actually established</h2>
+    </div>
+    <div class="sbody">
+      <p><strong>Trend-following's crisis protection is real.</strong> It appeared in both down years of a window we had never examined, and in 2022 it turned a 6.5% loss into a 5.8% gain. Whatever else is true, that property is not folklore.</p>
+      <p><strong>On this universe, in these two eras, it does not pay for itself.</strong> Buy-and-hold more than doubled the account. The strategy returned a quarter, traded 850 times to do it, and paid twelve times the fees.</p>
+      <p><strong>Volatility scaling reliably reduces risk, and does not reliably improve risk-adjusted return.</strong> It helped in one era and did not replicate in the other.</p>
+      <p><strong>Sharp reversals are the dominant failure mode</strong>, in every version, in both eras.</p>
+
+      <h3>Why our version probably failed where the papers didn't</h3>
+      <p>None of these were tested, and none of them can now be tested on this data without invalidating the result. In rough order of how much we suspect them:</p>
+      <ul>
+        <li><strong>Too few independent bets.</strong> Ten ETFs behave like five. The papers use 58 and 67 genuinely distinct markets. If the per-market edge really is around 0.4, five bets is nowhere near enough to lift it above the noise.</li>
+        <li><strong>ETFs are not futures.</strong> They carry management fees and, in the commodity funds, roll costs — frictions the papers' instruments do not have.</li>
+        <li><strong>Monthly rebalancing on daily signals</strong> may be too slow to act on what the signal sees.</li>
+        <li><strong>The papers report returns gross of some frictions</strong> that were modelled here.</li>
+      </ul>
+      <p>Testing any of these means a fresh question and fresh data — real futures contracts, a wider universe — not more iterations on this one. The holdout has been read. Everything from here would be in-sample.</p>
+
+      <p class="pull">The strategy does not work as we built it. We know that with more confidence than most people ever have about a strategy that doesn't work.</p>
+    </div>
+  </section>
+
+  <div class="method">
+    <p class="eyebrow">Method &amp; reproducibility</p>
+    <div class="mgrid">
+      <div>
+        <h4>Split</h4>
+        <p>Build window 2008–2016. Holdout 2017–2025, unexamined until the final run, then read once and closed.</p>
+      </div>
+      <div>
+        <h4>Pre-registration</h4>
+        <p>Each version's success criterion was written before it ran. Holdout predictions and the falsification condition were committed with a timestamp.</p>
+      </div>
+      <div>
+        <h4>Costs</h4>
+        <p>Interactive Brokers commission model and margin account on every run. No version was tested without fees.</p>
+      </div>
+      <div>
+        <h4>Traceability</h4>
+        <p>Every recorded number links to the git commit of the code that produced it. Each version lives in its own file and is never edited after the fact.</p>
+      </div>
+      <div>
+        <h4>Engine</h4>
+        <p>QuantConnect / LEAN, which supplies point-in-time data, includes delisted securities, and runs identical code for backtest and live.</p>
+      </div>
+      <div>
+        <h4>Known limits</h4>
+        <p>Short borrow costs were not modelled — this flatters the short-selling versions, all of which failed anyway. Volatility used a 252-day realised estimate rather than the papers' three-year window.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
