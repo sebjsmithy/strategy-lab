@@ -1,31 +1,28 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **THE HOLDOUT RUN — this is the final experiment. Read [HOLDOUT.md](HOLDOUT.md) first.**
+> **THE HOLDOUT IS SPENT. The experimental phase of this project is over.**
 >
-> Run these three files in QuantConnect, **once each**, and record the numbers:
+> Result: both strategy arms CUT. The benchmark returned 8.58%/yr and more than
+> doubled the account; the strategies returned ~2.6%/yr. **The era hypothesis is
+> falsified** — H2 went from 0.048 in the build window to −0.239 in the supposedly
+> favourable era.
 >
-> 1. `strategies/v0b_buyhold_basket_holdout.py` — **H0**, the benchmark
-> 2. `strategies/v2a_holdout.py` — **H1**, trend signal, equal dollars
-> 3. `strategies/v2b_holdout.py` — **H2**, trend signal, equal risk
+> **Do not run more backtests on this strategy.** No new lookbacks, no new markets,
+> no vol-target tweaks. The holdout has been read; anything from here is in-sample
+> and would destroy the only clean evidence the project has. This rule was
+> pre-registered in HOLDOUT.md and applies now.
 >
-> For each take: Compounding Annual Return · Drawdown · Sharpe · Total Orders.
-> Also grab the equity curve for H2 — the *shape* matters as much as the number,
-> specifically whether 2022 carries it.
+> **The remaining work is the write-up.** The project has a genuine, defensible
+> negative result plus one real positive finding — crisis protection in 2018 and
+> 2022, reproduced out of sample. Six build-window experiments, a three-arm
+> out-of-sample test, pre-registered predictions scored honestly (2 of 6 correct,
+> and only the hindsight-contaminated ones), a measured universe analysis, and
+> reproducible code with commit hashes for every number.
 >
-> **THE RULE, and it is the one that matters:** after these three runs, change
-> nothing and re-run nothing. No adjusting the lookback, no adding markets, no
-> tweaking the vol target "just to see". The holdout is spent the moment it is
-> read, and every temptation afterwards converts an out-of-sample test into an
-> in-sample one — destroying the only clean evidence this project has.
->
-> **Predictions are already committed** in HOLDOUT.md, timestamped before the run.
-> Claude's record so far: wrong on v2a, right on v1s and v2b.
->
-> **After this: write up the project.** Six build-window experiments plus a clean
-> out-of-sample test, a literature basis, reproducible code with commit hashes,
-> and a measured universe analysis. Whatever the numbers say, that is a real
-> piece of work and a legitimate outcome.
+> If Seb wants to keep going *afterwards*, it needs a fresh question and fresh
+> data — real futures rather than ETFs, or a different strategy family entirely —
+> not more iterations on this one.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -85,9 +82,14 @@ before any run. Three arms, one run each.
 
 | Run | File | What it is | CAGR | Max DD | Sharpe | Trades |
 |---|---|---|---|---|---|---|
-| **H0** | `v0b_buyhold_basket_holdout.py` | benchmark — equal weight, always long | | | | |
-| **H1** | `v2a_holdout.py` | trend signal, equal dollars | | | | |
-| **H2** | `v2b_holdout.py` | trend signal, equal risk | | | | |
+| **H0** | `v0b_buyhold_basket_holdout.py` | benchmark — equal weight, always long | **8.58%** | -16.80% | **0.448** | 89 |
+| **H1** | `v2a_holdout.py` | trend signal, equal dollars | 2.77% | -15.50% | **-0.156** | 811 |
+| **H2** | `v2b_holdout.py` | trend signal, equal risk | 2.62% | **-12.90%** | **-0.239** | 849 |
+
+**Result: both strategy arms CUT. The era hypothesis is FALSIFIED.**
+H2 went from 0.048 in the build window to **−0.239** in the "favourable" era —
+worse, not better. HOLDOUT.md pre-registered that a Sharpe below ~0.1 would
+falsify the era explanation. It came in well below.
 
 `H0 → H1` isolates **the signal**. `H1 → H2` isolates **the sizing**.
 
@@ -303,6 +305,111 @@ as the cost of the improvement.
 finished at $114.5k. This matches the documented weakness of trend-following in
 choppy, trendless markets, and matches the papers' per-decade table showing
 2010–2016 as the weakest stretch in 137 years.
+
+### HOLDOUT — the final experiment (2017-01-01 → 2025-12-31)
+
+- **Raw results:** `Backtest recordings/v0_holdout.json`, `v2a_holout.json`, `v2b_holdout.json`
+- **Pre-registration:** [HOLDOUT.md](HOLDOUT.md), committed at `b12d7ab` before any run.
+- **Status: SPENT.** Three runs, one each. Nothing tuned afterwards.
+
+| | H0 benchmark | H1 equal-$ | H2 equal-risk |
+|---|---|---|---|
+| CAGR | **8.583%** | 2.768% | 2.619% |
+| Max drawdown | 16.80% | 15.50% | **12.90%** |
+| Sharpe | **0.448** | −0.156 | −0.239 |
+| Annual volatility | 7.3% | 5.2% | **4.1%** |
+| End equity | **$209,911** | $127,869 | $126,216 |
+| Total fees | **$98** | $1,181 | $1,211 |
+| Orders | 89 | 811 | 849 |
+| Expectancy | n/a¹ | 0.120 | **0.201** |
+| PSR | 1.974% | 0.001% | 0.000% |
+
+¹ H0's trade statistics (97% win rate, profit-loss ratio 34.05) are an artifact of
+monthly rebalancing generating many tiny trades that nearly all close positive.
+Not meaningful; ignore them.
+
+### Year by year — this is where the story is
+
+| Year | H0 | H1 | H2 | |
+|---|---|---|---|---|
+| 2017 | +9.4% | +4.2% | +4.1% | |
+| 2018 | **−5.8%** | −0.4% | −0.6% | ← protected |
+| 2019 | +13.8% | −3.8% | −1.3% | |
+| 2020 | +12.5% | +4.7% | +5.0% | |
+| 2021 | +8.4% | +1.5% | +1.2% | |
+| 2022 | **−6.5%** | **+5.1%** | **+5.8%** | ← **crisis alpha, exactly as advertised** |
+| 2023 | +7.3% | **−7.7%** | **−5.8%** | ← reversal damage |
+| 2024 | +12.2% | +5.3% | +5.4% | |
+| 2025 | +30.2% | +18.0% | +10.8% | |
+
+**The two things that matter:**
+
+**1. The crisis-protection property is REAL.** In both years the benchmark lost
+money — 2018 and 2022 — the strategy protected. In 2022 it did not merely lose
+less, it **made +5.8% while the benchmark lost 6.5%**, a 12-point swing. That is
+precisely the behaviour Hurst, Ooi & Pedersen describe, reproduced out of sample.
+
+**2. It is not remotely worth what it costs.** In the seven up years the strategy
+captured a fraction of the upside and twice went outright negative while the
+benchmark rose (2019: +13.8% vs −1.3%; 2023: +7.3% vs −5.8%). Over nine years the
+benchmark **more than doubled** the account while the strategy made 26%.
+
+**You paid 6 percentage points a year to save 4 points of drawdown.** A terrible
+trade at any risk tolerance.
+
+**The recurring cause across the whole project: sharp reversals.** 2009 killed
+v2a in the build window; 2023 was the worst year of the holdout for both arms.
+After a strong trend year the strategy is positioned for continuation, the market
+snaps back, and it is run over. This is the single most consistent failure mode
+observed across six experiments.
+
+### Scoring the pre-registered predictions
+
+| # | Prediction | Outcome |
+|---|---|---|
+| 1 | H2 Sharpe 0.2–0.5, beating build-window 0.048 | **WRONG** — −0.239, worse not better |
+| 2 | H2 beats H1 *(flagged as the cleanest test)* | **WRONG** — −0.239 vs −0.156 |
+| 3 | H0 highest raw return | **CORRECT** |
+| 4 | H1/H2 lower drawdown than H0 | **CORRECT** |
+| 5 | Lumpy curve, weak 2017–21, jump in 2022 | **PARTIAL** — lumpy ✓, weak early ✓, but **2025 (+10.8%) was the standout year, not 2022 (+5.8%)** |
+| 6 | 2020 mixed, not good | **WRONG** — +5.0%, one of H2's better years |
+
+**Two correct out of six** — and both correct ones (3 and 4) were the predictions
+explicitly flagged in HOLDOUT.md as contaminated by hindsight. **Every genuinely
+uncertain prediction was wrong.** Worth stating plainly: the value here came from
+writing them down beforehand, not from their accuracy.
+
+**On prediction 2 specifically.** H2 beat H1 on drawdown (12.9% vs 15.5%),
+volatility (4.1% vs 5.2%), expectancy (0.201 vs 0.120) and profit-loss ratio
+(1.40 vs 1.22) — but earned 0.15pp less, and Sharpe fell. When excess return is
+negative, lower volatility makes Sharpe *more* negative, so the metric works
+against a less risky strategy. That is a real mechanical effect and worth
+understanding — but it is an explanation, not a rescue. **On the metric registered
+in advance, the prediction failed and the vol-scaling benefit did not replicate.**
+
+### The conclusion
+
+HOLDOUT.md stated the falsification condition before the run: *"If H2 lands near
+zero again — Sharpe below roughly 0.1 — then the era explanation fails and the
+more likely reading is that this implementation does not capture whatever the
+papers captured."*
+
+**H2 came in at −0.239. The era hypothesis is falsified.** The strategy did not
+underperform because 2008–2016 was a hostile decade. It performed *worse* in the
+era containing COVID and the 2022 inflation shock.
+
+The honest reading: **this implementation does not capture what the papers
+capture.** Plausible reasons, none tested and none of which can now be tested on
+this data: ten ETFs give ~5 effective bets against the papers' 58–67 markets;
+ETFs carry management fees and roll drag that futures do not; monthly rebalancing
+on daily signals may be too slow; and the papers' returns are gross of the frictions
+modelled here.
+
+**What the project did establish, honestly:**
+- Trend-following's crisis-protection property is real and reproduced out of sample (2018, 2022).
+- On this universe, in these two eras, it does not pay for itself.
+- Volatility scaling reliably reduces risk; it did not reliably improve risk-adjusted return.
+- Sharp reversals are the dominant failure mode.
 
 ---
 
