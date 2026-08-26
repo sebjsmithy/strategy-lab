@@ -1,33 +1,36 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **Run `strategies/v2b_trend_basket_volscaled.py` in QuantConnect** and bring back:
-> Compounding Annual Return · Drawdown · Sharpe Ratio · Total Orders.
+> **DECISION POINT — discuss with Seb, do not pick unilaterally.**
 >
-> **This is the cleanest single-variable test in the project.** Identical to v2a in
-> universe, signal, window, costs and schedule. Only sizing changes: equal *dollars*
-> → equal *risk*. Gross exposure is held at 100% in both, so nothing is explained by
-> leverage.
+> **v2b is CUT** (Sharpe 0.048 vs a 0.135 bar) — but vol scaling worked exactly as
+> designed: +92% return, −40% drawdown, expectancy nearly tripled. The sizing was
+> fixed; the underlying edge is what is missing. In this era the strategy earns
+> roughly what cash pays.
 >
-> The re-weighting is material, not cosmetic — measured 4.7× vol spread across the
-> basket (see `UNIVERSE.md`). Bonds and the dollar roughly double; silver and
-> emerging markets roughly halve. Risk contribution goes from a 0.73%–3.45% spread
-> to a flat 1.65% per market.
+> **The build-window ladder is effectively finished.** The remaining rungs no
+> longer make sense: v3 was parameter-robustness, but the blended 1/3/12-month
+> signal has no parameters to sweep; v4/v5 add regime logic on top of a strategy
+> with no edge to modulate.
 >
-> **KEEP bar: Sharpe ≥ 0.135.**
-> **Claude's prediction:** beats v2a, but probably still under 0.3. Flagged as *not*
-> a blind forecast — it is informed by knowing 2008–2016 was a bond bull market, and
-> v2b shifts capital toward bonds. Discount accordingly. Claude was wrong on v2a
-> (predicted 0.3–0.6, actual −0.015).
+> Two genuine options remain:
 >
-> **If v2b also lands near zero**, that is the finding, and it is a real one:
-> this strategy did not work in this era on this universe, tested properly.
-> Write it up rather than reaching for v4/v5.
+> **(a) v2c — GARCH volatility instead of realised volatility.** Seb's original
+> component #1, and a clean single-variable test. Honest expectation: a refinement,
+> not a step change. Likely moves Sharpe by hundredths, not tenths. Also unverified
+> whether QuantConnect provides the `arch` package.
 >
-> **Deliberately deferred to a possible v2c:** (a) portfolio-level vol targeting to
-> 10% — pure leverage, cannot change Sharpe, would only inflate CAGR; (b) GARCH
-> instead of realised volatility as the sizing input — a genuine "does a better vol
-> forecast help?" question, worth its own row. One change at a time.
+> **(b) Spend the holdout (2017 → today) as an era test.** The strongest remaining
+> experiment. Our entire diagnosis has been that 2008–2016 is a bad era for this
+> strategy; the holdout contains COVID and the 2022 inflation shock, when
+> trend-followers did famously well. **If this is run, pre-register the prediction
+> first**, run exactly once, and be clear it tests the *era hypothesis* — it does
+> not convert a CUT strategy into a validated one, since the era was chosen
+> knowingly.
+>
+> After either, the honest move is to **write up the finding**. Six recorded
+> experiments, a literature basis, reproducible code, and a clear negative result
+> is a legitimate project outcome — not a failure.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -67,7 +70,7 @@ Read this first to see where things stand. Rules for filling it in are in [READM
 | v1 | `77a8ef9` | Sharpe ≥ 0.88 **and** drawdown no worse than 22.80% | 6.61% | -17.20% | 0.434 | 87 | Sharpe −0.30 | **CUT** |
 | v1s | `f304583` | Sharpe ≥ 0.88. Claude predicts **worse** than v1@40d (0.400) | **-2.18%** | **-47.20%** | **-0.097** | 108 | Sharpe −0.50 | **CUT** |
 | **v2a** | `0dffed2` | Sharpe ≥ 0.50. Claude predicted 0.3–0.6 — **wrong** | 0.79% | -17.10% | **-0.015** | 870 | — (new window) | **CUT** |
-| **v2b** | | Sharpe ≥ 0.135 (beats v2a's −0.015 by 0.15). Claude predicts it beats v2a but stays under 0.3 | | | | | | pending |
+| **v2b** | `b754ab8` | Sharpe ≥ 0.135. Claude predicted "beats v2a, under 0.3" — **correct** | 1.52% | -10.20% | **0.048** | 856 | Sharpe **+0.063** | **CUT** |
 | v3 | | robustness checks on whatever survives | | | | | | — |
 | v4 | | Markov conviction scaling | | | | | | — |
 | v5 | | regime-based strategy selection | | | | | | — |
@@ -241,6 +244,59 @@ strategy behaved correctly, and 2010–2016 is the weakest decade in the papers'
 137-year sample. It does say that **an equal-dollar-weighted version of it earned
 nothing above cash in this era**, and that its one good year was the one crisis in
 the window.
+
+### v2b — same basket and signal, volatility-scaled sizing
+- **Status:** CUT — improved on every metric, but fell short of the bar.
+- **File:** `strategies/v2b_trend_basket_volscaled.py` @ `b754ab8`
+- **Result:** CAGR **1.518%** · Max DD **10.20%** · Sharpe **0.048** · 856 orders
+- **$100,000 → $114,527.38.** Fees $1,326.48. Turnover 1.76%.
+- **Pre-reg bar was Sharpe ≥ 0.135.** Actual 0.048 — a real improvement of +0.063,
+  but less than half the required 0.15. **CUT on the rule as written.**
+- **Claude's prediction was correct this time:** "beats v2a, but probably still
+  under 0.3." (Claude was wrong on v2a.)
+
+**Vol scaling worked. It improved literally every metric:**
+
+| | v2a (equal $) | v2b (equal risk) | Change |
+|---|---|---|---|
+| Sharpe | −0.015 | **0.048** | +0.063 |
+| CAGR | 0.791% | **1.518%** | **+92%** |
+| Max drawdown | 17.10% | **10.20%** | **−40%** |
+| Annual volatility | 7.4% | **5.5%** | −26% |
+| Expectancy | 0.036 | **0.104** | **+189%** |
+| Profit-loss ratio | 1.09 | **1.24** | +14% |
+| End equity | $107,354 | **$114,527** | +$7,173 |
+| PSR | 0.012% | 0.029% | — |
+
+Nearly double the return on a quarter less risk, with a 40% smaller drawdown.
+That is not noise — it is a systematic improvement in exactly the direction
+predicted from the measured 4.7× volatility spread (see `UNIVERSE.md`).
+
+**The clearest way to see it:** raw return per unit of volatility went from
+0.791/7.4 = **0.107** to 1.518/5.5 = **0.276** — roughly **2.6× better**. Sharpe
+understates this because it subtracts the risk-free rate, which over 2008–2016
+consumed most of a 1.5% return.
+
+**So why is it still CUT?** Because vol scaling fixed the *sizing*, and the
+sizing was never the main problem. **A better-sized version of a strategy with no
+edge is still a strategy with no edge.** 1.518% a year is roughly what cash paid.
+
+**On the win rate being below 50%** (49% win / 51% loss): this is normal and
+expected for trend-following, not a warning sign. Real trend-followers typically
+win 35–45% of the time. What matters is that average win (0.23%) exceeds average
+loss (0.18%), giving a profit-loss ratio of 1.24 and **positive expectancy that
+nearly tripled** from v2a. You win less often and win bigger. Win rate read alone
+is meaningless.
+
+**One metric got worse: Drawdown Recovery 1,218 days** (v2a: 206). Smaller
+drawdowns, but far longer to climb out of them — a mechanical consequence of
+lower volatility, since a calmer strategy grinds back more slowly. Worth noting
+as the cost of the improvement.
+
+**2015 onward is a genuine bleed.** Equity peaked around $122k in early 2015 and
+finished at $114.5k. This matches the documented weakness of trend-following in
+choppy, trendless markets, and matches the papers' per-decade table showing
+2010–2016 as the weakest stretch in 137 years.
 
 ---
 
