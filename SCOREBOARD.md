@@ -1,22 +1,23 @@
 # Scoreboard
 
 > ### ▶ NEXT ACTION
-> **v1s is CUT — it lost money (Sharpe −0.097, CAGR −2.18%, drawdown 47.2%).**
-> Donchian is now rejected on QQQ in *both* configurations: long/flat and
-> long/short. The parameter was not the problem and neither was the direction
-> logic. **The instrument is the problem.**
+> **Run `strategies/v2a_trend_basket.py` in QuantConnect** and bring back:
+> Compounding Annual Return · Drawdown · Sharpe Ratio · Total Orders.
+> Also check Exposure and Portfolio Margin — gross should stay at or below 100%.
 >
-> **Diagnosis:** breakout/trend rules need assets that make large sustained
-> directional moves. QQQ grinds upward with mean-reverting noise, so buy-and-hold
-> captures the drift and any rule that exits just pays whipsaw. And its upward
-> drift makes the short leg structurally loss-making.
+> First paper-faithful version: 10-ETF basket, signal is the sign of past return
+> blended equally across 1/3/12-month lookbacks, long and short, monthly rebalance,
+> **equal weight (no vol-scaling)**. New build window 2008–2016.
 >
-> **Next: `v2a` — same Donchian 40/40 long/short, different instrument.**
-> One change only: the asset. Candidates discussed — a commodity/managed-futures
-> style market (crude, gold, broad commodities) or crypto. Then `v2b` extends to
-> a diversified basket, which is how trend-following is actually run.
+> **Claude's pre-registered prediction:** positive but unspectacular, Sharpe
+> roughly 0.3–0.6, with v2b beating it. KEEP bar is Sharpe ≥ 0.50.
 >
-> Decide the instrument with Seb before writing. Do not skip ahead to v4/v5.
+> **When reading the result:** the build window includes 2008, an exceptional year
+> for trend-following. Check the equity curve, not just the summary — a strong
+> number carried entirely by one year is not the same as a consistent one.
+>
+> Then `v2b` adds volatility scaling — the single clean attributable comparison.
+> Do not skip ahead to v4/v5.
 >
 > *(Claude: keep this block updated at the end of every session. It is the first
 > thing to read when Seb comes back after a gap.)*
@@ -27,11 +28,24 @@
 
 Read this first to see where things stand. Rules for filling it in are in [README.md](README.md) §5 and §6.
 
-- **Build window:** 2010-01-01 → 2018-12-31 (all development happens here)
-- **Holdout window:** 2019-01-01 → today (**untouched so far** — one look, at the end)
-- **Instrument:** QQQ
+- **Build window:** **2008-01-01 → 2016-12-31** (all development happens here)
+- **Holdout window:** **2017-01-01 → today** (**untouched** — one look, at the end)
+- **Instruments:** v0–v1s used QQQ. **v2a onward: a 10-ETF basket** —
+  `GLD SLV DBC DBA` (commodity) · `SPY EFA EEM` (equity) · `TLT IEF` (bond) · `UUP` (currency)
 - **Starting cash:** $100,000
 - **Costs:** Interactive Brokers fee model, margin account — on in every version
+
+> **Window changed 2026-08-26**, before any multi-asset run. Was 2010–2018 build /
+> 2019+ holdout. Reasons: (1) HOP 2017 shows 2010–2016 is the weakest decade for
+> trend-following in a 137-year sample, so the old build window lacked regime
+> variety — the new one contains the GFC, the euro crisis and the 2015–16 selloff;
+> (2) the new holdout contains the COVID crash and the 2022 inflation shock, a far
+> better exam. **Legitimacy check:** changed before running anything new, old
+> holdout never looked at, reason drawn from the literature rather than from
+> disappointing results. See README §4.
+>
+> v0–v1s numbers below were measured on the **old** 2010–2018 window and are kept
+> for the record. They are not directly comparable to v2a onward.
 
 ---
 
@@ -42,11 +56,11 @@ Read this first to see where things stand. Rules for filling it in are in [READM
 | v0 | `2277fc1` | *(baseline — nothing to beat yet)* | 15.44% | -22.80% | 0.73 | 1 | — | **baseline** |
 | v1 | `77a8ef9` | Sharpe ≥ 0.88 **and** drawdown no worse than 22.80% | 6.61% | -17.20% | 0.434 | 87 | Sharpe −0.30 | **CUT** |
 | v1s | `f304583` | Sharpe ≥ 0.88. Claude predicts **worse** than v1@40d (0.400) | **-2.18%** | **-47.20%** | **-0.097** | 108 | Sharpe −0.50 | **CUT** |
-| v2 | | | | | | | | |
-| v3a | | | | | | | | |
-| v3b | | | | | | | | |
-| v4 | | | | | | | | |
-| v5 | | | | | | | | |
+| **v2a** | | Sharpe ≥ 0.50. Claude predicts 0.3–0.6, and that v2b beats it | | | | | | pending |
+| v2b | | Beats v2a on Sharpe by ≥ 0.15 (vol-scaling earns its place) | | | | | | queued |
+| v3 | | robustness checks on whatever survives | | | | | | — |
+| v4 | | Markov conviction scaling | | | | | | — |
+| v5 | | regime-based strategy selection | | | | | | — |
 
 **Verdict** is one of: `KEPT` · `CUT` · `baseline` · `pending`
 

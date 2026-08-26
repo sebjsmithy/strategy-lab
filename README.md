@@ -2,12 +2,115 @@
 
 A small, honest trading-strategy research project. Two people: **Seb** and **Akram**.
 
-We build a simple breakout strategy, backtest it properly on QuantConnect, and add one component at a time — measuring whether each one actually helped. The goal is not to get rich. The goal is to end up with a result we can defend, including if that result is *"this doesn't work."*
+We build a simple trend-following strategy, backtest it properly on QuantConnect, and add one component at a time — measuring whether each one actually helped. The goal is not to get rich. The goal is to end up with a result we can defend, including if that result is *"this doesn't work."*
+
+---
+
+## Start here — what we're doing and why
+
+*If you've been away, or you're new, read only this section. Everything below is detail.*
+
+### The strategy in one paragraph
+
+**We buy ten different things. Every month we look at each one and ask a simple
+question: has the price been going up recently, or down? If it's been going up we
+bet it keeps going up. If it's been going down we bet it keeps going down. We do
+this for all ten independently, at the same time. Most of these bets are small
+losers. A few catch a big move and pay for all the rest.**
+
+That's the entire idea.
+
+### What the ten things are
+
+Each is an ETF — a fund you buy like a share, which owns a pile of something on
+your behalf.
+
+| Ticker | What you actually own |
+|---|---|
+| **GLD** | Gold bars in a vault. Owning gold without storing it. |
+| **SLV** | Same, but silver. |
+| **DBC** | A basket of commodity contracts — oil, petrol, metals, crops. Mostly energy. |
+| **DBA** | Farm goods only — corn, wheat, soybeans, sugar, coffee. |
+| **SPY** | The 500 biggest US companies. Essentially "the American stock market". |
+| **EFA** | Big companies outside North America — Europe, Japan, Australia. |
+| **EEM** | Big companies in developing countries — China, India, Brazil, Korea. |
+| **TLT** | US government debt repaid in 20+ years. Moves a lot with interest rates. |
+| **IEF** | Same, but repaid in 7–10 years. Moves less. |
+| **UUP** | The US dollar against other currencies. Rises when the dollar strengthens. |
+
+Four commodity-ish, three stock-ish, two bond-ish, one currency. That mix is
+deliberate: it mirrors the papers, which are roughly 43% commodities.
+
+### How these are normally used, and how we differ
+
+Normally people buy these and hold for decades. A pension fund owns SPY and TLT
+forever. Gold is held as insurance. Commodity funds are held as inflation
+protection. Almost nobody bets *against* them.
+
+We're doing something different. We have no opinion about gold, or oil, or China.
+We aren't analysing anything. We just measure whether the price is higher than it
+was a while ago. Yes → buy. No → bet against it. **We don't care what these assets
+are, only which way they've been moving.**
+
+### Why ten things instead of one
+
+This is the part that matters most, and it's why the QQQ tests went nowhere.
+
+Think of a football scout. They can't reliably tell which single 16-year-old will
+turn pro — on any one kid their judgement is barely better than a coin flip. But
+sign sixty using a consistent method and a handful become stars who more than pay
+for everyone who didn't make it. **Judging that scout by one player tells you
+nothing.** That is exactly what v1 and v1s did with QQQ.
+
+The papers put a number on it: across 67 markets over 137 years, every single
+market was profitable, at an average Sharpe of about **0.4**. Real, but far too
+weak to detect in one asset over nine years. You only see it stacked.
+
+### Why we bet against things here, when that failed on QQQ
+
+QQQ goes up over time — that's what stock indexes do. Betting against it is
+fighting gravity, which is why v1s lost 18%.
+
+Gold, oil, currencies and bonds have no built-in upward drift. Over decades they
+go up *and* down. So betting against them isn't fighting a tide, it's the other
+half of a symmetric bet. **Shorting was wrong on QQQ specifically, not wrong in
+general.**
+
+### What "volatility scaling" means
+
+Some of these swing wildly (silver, emerging markets). Some barely move
+(medium-term bonds). Put £10,000 into each and silver alone drives nearly all your
+results — the calm ones are inaudible.
+
+So we put **less money into the jumpy ones and more into the calm ones**, so each
+contributes roughly equally. Like setting the volume on ten speakers so no single
+one drowns out the rest.
+
+The papers treat this as part of the strategy, not an optional extra — which is
+why v2a runs without it and v2b adds it, so we can *see* what it is worth.
+
+### What you're doing, and how you got here
+
+**What you're doing:** building the simplest honest version of a well-documented
+strategy, testing it carefully, and writing down what happened — including when it
+doesn't work.
+
+1. Tested a trend rule on QQQ. It lost. Tested it in both directions. It lost worse.
+2. Rather than tweaking numbers until something looked good, asked *why*.
+3. The answer, from two peer-reviewed papers: this has never been a single-asset
+   strategy. We were running one line of a sixty-line portfolio.
+4. So now we run it the way the evidence says it is actually built — many markets,
+   both directions, sized by risk.
+
+**The discipline throughout:** decide what "it worked" means *before* running.
+Change one thing at a time. Never look at the holdout years. Record the result
+whether we like it or not. That last part is the actual skill.
 
 ---
 
 ## Table of contents
 
+0. [**Start here** — what we're doing and why](#start-here--what-were-doing-and-why)
 1. [Why this project exists](#1-why-this-project-exists)
 2. [What we're building](#2-what-were-building)
 3. [The ladder](#3-the-ladder)
@@ -36,24 +139,70 @@ The full write-up of that decision lives in the Horizon repo as `STRATEGY_REPIVO
 
 ## 2. What we're building
 
-**The whole idea in one paragraph:**
+Plain-English version is in [Start here](#start-here--what-were-doing-and-why).
+This section is the technical statement of the same thing.
 
-> When a stock's price climbs above the highest price it has hit in the last 20 days, that is often a sign it will keep climbing — so we buy. When it drops below its 20-day low, we get out. Separately, we measure how *jumpy* the market is right now: when things are calm we put more money in, when things are wild we put less in. Then we check whether the market is in a calm-upward phase or a panicky phase, and see whether our rule works better in one than the other.
+### The strategy, precisely
 
-### The four components
+For each market *i*, at each monthly rebalance, using only data available on that date:
 
-| # | Component | What it does | Answers |
+```
+S₁   = sign(return over past 21 trading days)     ≈ 1 month
+S₃   = sign(return over past 63 trading days)     ≈ 3 months
+S₁₂  = sign(return over past 252 trading days)    ≈ 12 months
+
+raw position_i = (S₁ + S₃ + S₁₂) / 3        →  one of −1, −⅓, +⅓, +1
+```
+
+Each signal is binary (+1 long, −1 short) and the three are **equal-weighted** —
+so the position size scales with how much the timescales agree:
+
+| S₁ | S₃ | S₁₂ | Position |
 |---|---|---|---|
-| 1 | **Donchian breakout** | Buy at a 20-day high, exit at a 20-day low | *Which way?* |
-| 2 | **GARCH volatility model** | Forecasts how jumpy prices will be; size down when jumpy | *How much?* |
-| 3 | **Bollinger breakout** | A second, different entry rule to compare against #1 | *Is there a better rule?* |
-| 4 | **Markov regime model** | Labels each day bull / sideways / bear, tracks transitions | *Does context matter?* |
+| + | + | + | **+1.00** full long |
+| + | + | − | **+0.33** small long |
+| − | + | − | **−0.33** small short |
+| − | − | − | **−1.00** full short |
 
-### What we trade
+That is conviction-weighting for free: when short and long horizons disagree —
+precisely when trends are ambiguous and whipsaw is most costly — the position is
+small. It also removes parameter selection entirely. We do not pick a lookback,
+so there is nothing to sweep and nothing to overfit. The weights are equal by
+design; optimising them would reintroduce the problem.
 
-**QQQ** — the NASDAQ-100 tracker. Boring, enormously liquid, decades of clean free data. Deliberately unglamorous.
+### The two versions
 
-We are explicitly **not** starting with a basket of AI-adjacent stocks. Picking that basket in 2026 means we already know which ones won — the backtest would look spectacular and prove nothing. That is data leakage in the choice of universe rather than in the code, which makes it nearly invisible. It can come back later as a "does this generalise" test.
+| | Sizing |
+|---|---|
+| **v2a** | Equal notional per market: `weight_i = 0.10 × position_i`. Max gross exposure 100%. |
+| **v2b** | Volatility-scaled: quiet markets get more, jumpy markets get less, portfolio targeting ~10% annualised volatility. |
+
+v2a exists purely so v2b has something to be measured against. The papers treat
+vol-scaling as constitutive of the strategy, so we expect v2b to win — but
+"expect" is not "know", which is the whole point of running both.
+
+### The universe
+
+Ten ETFs — four commodity, three equity, two bond, one currency:
+
+`GLD` `SLV` `DBC` `DBA` · `SPY` `EFA` `EEM` · `TLT` `IEF` · `UUP`
+
+Chosen to mirror the papers' roughly 43% commodity weighting, and to diversify
+**across** asset classes rather than within. Nominal N is 10, but effective N is
+more like 5–6 — SPY/EFA/EEM move together, TLT/IEF nearly duplicate each other.
+Correlated markets do not each count as a separate bet.
+
+All ten have price history from early 2007 or earlier, so the 2008–2016 build
+window and the 2017+ holdout both work without gaps.
+
+**On oil specifically:** exposure comes via `DBC` rather than `USO`. USO is badly
+distorted by roll decay — in 2020 it broke so severely the fund restructured. If
+pure oil is ever wanted as its own line, add USO separately and treat its result
+with suspicion.
+
+**We are explicitly not** using a basket of AI-adjacent stocks. Picking that in
+2026 means already knowing which ones won — data leakage in the choice of
+universe rather than in the code, which makes it nearly invisible.
 
 ### Platform
 
@@ -74,18 +223,32 @@ We are explicitly **not** starting with a basket of AI-adjacent stocks. Picking 
 
 We never build the whole system and then evaluate it. We build the dumbest possible version, record its numbers, then add **one** component at a time.
 
-| v | What changes | The question it answers | Overfit risk |
-|---|---|---|---|
-| **v0** | Buy & hold QQQ, no strategy | What am I trying to beat? | — |
-| **v1** | Donchian 20d, **long only**, fixed size | Does the entry rule do anything at all? | low |
-| **v1s** | *side test:* add short trades | Do shorts pay for their borrow cost? | low |
-| **v2** | + GARCH volatility-based sizing | Does risk-based sizing beat fixed size? | low |
-| **v3a** | Bollinger breakout **instead of** Donchian | Is a different entry rule better? | low |
-| **v3b** | Both rules combined | Are they additive, or redundant? | **medium** |
-| **v4** | + Markov conviction scaling: size × (P(bull) − P(bear)) | Does regime *scaling* help? | **medium** |
-| **v5** | Regime-based strategy *selection* | Which rule wins in which regime? | **HIGH** |
+| v | What changes | The question it answers | Overfit risk | Status |
+|---|---|---|---|---|
+| **v0** | Buy & hold QQQ, no strategy | What am I trying to beat? | — | baseline |
+| **v1** | Donchian 20d on QQQ, **long only** | Does the entry rule do anything at all? | low | CUT |
+| **v1-sweep** | Donchian lookback 5–50 on QQQ | Is it the parameter or the idea? | low | CUT |
+| **v1s** | Donchian 40/40 on QQQ, **long + short** | Do shorts help on an index? | low | CUT |
+| **v2a** | **10-market basket**, blended 1/3/12-month trend, long+short, equal weight | Does the strategy work when run as a *portfolio*? | low | **next** |
+| **v2b** | + **volatility scaling** to a 10% portfolio vol target | Does risk-based sizing earn its place? | low | queued |
+| **v3** | Parameter/robustness checks on whatever survives | Is it a plateau or a spike? | medium | — |
+| **v4** | + Markov conviction scaling | Does regime *scaling* help? | **medium** | — |
+| **v5** | Regime-based strategy *selection* | Which rule wins in which regime? | **HIGH** | — |
 
-`v1s` is a side test, not a rung — it branches off `v1` and either earns its way in or doesn't.
+**The v1 family is closed.** Donchian on QQQ was rejected in every configuration —
+long/flat, long/short, and across every lookback from 5 to 50 days. The diagnosis
+is in `SCOREBOARD.md`: single-asset tests cannot detect a ~0.4-Sharpe edge, so
+those runs were structurally uninformative rather than evidence against trend
+following. See `Academic Papers/NOTES.md`.
+
+**v2a and v2b are paper-faithful**, following Hurst, Ooi & Pedersen (2017):
+
+- **Signal** is the *sign of the past return*, not a channel breakout.
+- **Three lookbacks blended equally** — 1, 3 and 12 months — so position size
+  scales with how much the timescales agree. This removes the parameter-selection
+  problem entirely: no sweep, no plateau hunting.
+- **Always long or short**, never flat.
+- **Monthly rebalancing**, not daily.
 
 **v0 matters more than it sounds.** If the clever strategy cannot beat buying QQQ and going to sleep, that is the result. Most strategies can't.
 
@@ -107,8 +270,29 @@ So v5 goes last, and gets judged on the holdout only.
 
 | Window | Dates | Use |
 |---|---|---|
-| **Build** | 2010-01-01 → 2018-12-31 | Tune here. Run 500 backtests if you want. |
-| **Holdout** | 2019-01-01 → today | Touch **once**, at the end. |
+| **Build** | 2008-01-01 → 2016-12-31 | Tune here. Run 500 backtests if you want. |
+| **Holdout** | 2017-01-01 → today | Touch **once**, at the end. |
+
+**These windows were changed on 2026-08-26, before any multi-asset run.** The
+original split was 2010–2018 build / 2019+ holdout. Two reasons for the change,
+both recorded here so it is on the record rather than quietly done:
+
+1. **Regime coverage.** Hurst, Ooi & Pedersen show 2010–2016 is the *weakest
+   decade for trend-following in their 137-year sample* (roughly 0.41 versus 1.70
+   in the 1970s), plausibly because QE suppressed volatility and truncated trends.
+   Testing only there risks rejecting a strategy that works in normal conditions.
+   The new build window contains the GFC, the euro crisis and the 2015–16 selloff.
+2. **A better exam.** The new holdout contains the COVID crash and the 2022
+   inflation shock — the best natural experiment available, and a period when
+   trend-followers did famously well. A strategy tuned on 2008–2016 that survives
+   those untouched is a genuinely strong result. One tuned *on* 2020–21 tells us
+   nothing.
+
+**The legitimacy test that was applied:** the change was made *before* running
+anything on the new basket, the old holdout was never looked at, and the reason
+comes from the literature rather than from disappointing results. Changing a
+window because results were bad is data-snooping. Changing it beforehand for
+documented reasons of regime coverage is experimental design.
 
 The holdout is a one-shot exam. Every peek makes it less honest, because you start unconsciously tuning toward it. All development happens in the build window.
 
