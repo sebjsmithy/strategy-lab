@@ -1,6 +1,6 @@
 # strategy-lab
 
-A small, honest trading-strategy research project. Two people: **Seb** and **Akram**.
+A small, honest trading-strategy research project. Two people: **Seb** and **Akram** supplementing initially.
 
 We build a simple trend-following strategy, backtest it properly on QuantConnect, and add one component at a time — measuring whether each one actually helped. The goal is not to get rich. The goal is to end up with a result we can defend, including if that result is *"this doesn't work."*
 
